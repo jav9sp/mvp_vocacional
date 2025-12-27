@@ -1,0 +1,27 @@
+{
+  "name": "mvp-vocacional",
+  "version": "1.0.0",
+  "description": "",
+  "main": "index.js",
+  "scripts": {
+    "dev:api": "npm run dev -w @apps/api",
+    "dev:web": "npm run dev -w @apps/web",
+    "dev": "concurrently -n api,web -c auto \"npm run dev:api\" \"npm run dev:web\"",
+    "build:api": "npm run build -w @apps/api",
+    "build:web": "npm run build -w @apps/web",
+    "db:seed": "npm run seed -w @packages/db",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "private": "true",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "concurrently": "^9.2.1",
+    "typescript": "^5.9.3"
+  }
+}
