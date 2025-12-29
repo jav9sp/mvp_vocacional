@@ -1,0 +1,49 @@
+// apps/api/src/auth/auth.controller.ts
+import bcrypt from "bcrypt";
+import { z } from "zod";
+import User from "../models/User.model.js";
+import { signAccessToken } from "../utils/jwt.js";
+
+const LoginBodySchema = z.object({
+  email: z.email(),
+  password: z.string().min(1),
+});
+
+export async function login(req: any, res: any) {
+  const parsed = LoginBodySchema.safeParse(req.body);
+  if (!parsed.success) {
+    return res.status(400).json({
+      ok: false,
+      error: "Invalid body",
+      details: parsed.error.flatten(),
+    });
+  }
+
+  const { email, password } = parsed.data;
+
+  // Busca usuario por email
+  const user = await User.findOne({ where: { email } });
+  if (!user) {
+    return res.status(401).json({ ok: false, error: "Invalid credentials" });
+  }
+
+  // Valida password
+  const valid = await bcrypt.compare(password, user.passwordHash);
+  if (!valid) {
+    return res.status(401).json({ ok: false, error: "Invalid credentials" });
+  }
+
+  const token = signAccessToken({ sub: user.id, role: user.role });
+
+  return res.json({
+    ok: true,
+    token,
+    user: {
+      id: user.id,
+      role: user.role,
+      name: user.name,
+      email: user.email,
+      mustChangePassword: user.mustChangePassword,
+    },
+  });
+}

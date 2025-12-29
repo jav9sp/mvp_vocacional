@@ -3,6 +3,12 @@ import cors from "cors";
 import "dotenv/config";
 import { db, connectDB } from "./config/sequelize.ts";
 
+import authRoutes from "./auth/auth.routes.ts";
+import meRoutes from "./auth/me.routes.ts";
+import testRoutes from "./routes/test.routes.ts";
+import attemptsRoutes from "./routes/attempts.routes.ts";
+import resultsRoutes from "./routes/results.routes.ts";
+
 const app = express();
 
 app.use(
@@ -41,3 +47,9 @@ bootstrap().catch((err) => {
   console.error("Bootstrap failed:", err);
   process.exit(1);
 });
+
+app.use("/auth", authRoutes);
+app.use("/", meRoutes);
+app.use("/test", testRoutes);
+app.use("/attempts", attemptsRoutes);
+app.use("/", resultsRoutes);
