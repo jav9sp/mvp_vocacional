@@ -1,0 +1,10 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StudentNavbar from "../../components/common/StudentNavbar";
+import TestWizard from "../../components/student/TestWizard";
+---
+
+<BaseLayout title="Test">
+  <StudentNavbar client:load />
+  <TestWizard client:load />
+</BaseLayout>

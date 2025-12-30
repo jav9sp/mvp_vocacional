@@ -1,0 +1,11 @@
+---
+import BaseLayout from "../layouts/BaseLayout.astro";
+import LoginForm from "../components/auth/LoginForm";
+---
+
+<BaseLayout title="Login">
+  <main style="max-width: 420px; margin: 40px auto;">
+    <h1>Login</h1>
+    <LoginForm client:load />
+  </main>
+</BaseLayout>

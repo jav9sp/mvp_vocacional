@@ -13,6 +13,44 @@ const AttemptIdParamsSchema = z.object({
 
 const EXPECTED_ANSWER_COUNT = 103;
 
+export async function getAttemptAnswers(req: any, res: any) {
+  const paramsParsed = AttemptIdParamsSchema.safeParse(req.params);
+  if (!paramsParsed.success) {
+    return res.status(400).json({ ok: false, error: "Invalid attemptId" });
+  }
+
+  const { attemptId } = paramsParsed.data;
+
+  const attempt = await Attempt.findByPk(attemptId, {
+    attributes: ["id", "userId", "status", "answeredCount", "testId"],
+  });
+
+  if (!attempt)
+    return res.status(404).json({ ok: false, error: "Attempt not found" });
+
+  if (attempt.userId !== req.auth!.userId) {
+    return res.status(403).json({ ok: false, error: "Forbidden" });
+  }
+
+  // Devolvemos todas las respuestas de ese attempt (103 máx, liviano)
+  const answers = await Answer.findAll({
+    where: { attemptId: attempt.id },
+    attributes: ["questionId", "value"],
+    order: [["questionId", "ASC"]],
+  });
+
+  return res.json({
+    ok: true,
+    attempt: {
+      id: attempt.id,
+      status: attempt.status,
+      answeredCount: attempt.answeredCount,
+      testId: attempt.testId,
+    },
+    answers: answers.map((a) => ({ questionId: a.questionId, value: a.value })),
+  });
+}
+
 export async function saveAttemptAnswers(req: any, res: any) {
   const paramsParsed = AttemptIdParamsSchema.safeParse(req.params);
   if (!paramsParsed.success) {

@@ -1,0 +1,10 @@
+---
+import BaseLayout from "../../layouts/BaseLayout.astro";
+import StudentNavbar from "../../components/common/StudentNavbar";
+import StudentHome from "../../components/student/StudentHome";
+---
+
+<BaseLayout title="Estudiante">
+  <StudentNavbar client:load />
+  <StudentHome client:load />
+</BaseLayout>

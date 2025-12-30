@@ -22,6 +22,6 @@ export const db = new Sequelize({
 
 export async function connectDB() {
   await db.authenticate();
-  await db.sync({ alter: true });
+  await db.sync();
   console.log("Conectado a la base de datos");
 }
