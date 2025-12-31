@@ -68,9 +68,37 @@ export default function TestWizard() {
 
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
 
+  const [checkingFinished, setCheckingFinished] = useState(true);
+  const [finishing, setFinishing] = useState(false);
+
+  useEffect(() => {
+    let alive = true;
+
+    api<{ status: string }>("/me/result")
+      .then((r) => {
+        if (!alive) return;
+        if (r.status === "finished") {
+          window.location.href = "/student/result";
+          return;
+        }
+      })
+      .catch(() => {
+        // si falla, no bloqueamos al estudiante
+      })
+      .finally(() => {
+        if (!alive) return;
+        setCheckingFinished(false);
+      });
+
+    return () => {
+      alive = false;
+    };
+  }, []);
+
   useEffect(() => {
     const auth = requireAuth("student");
     if (!auth) return;
+    if (checkingFinished) return;
 
     (async () => {
       try {
@@ -104,7 +132,7 @@ export default function TestWizard() {
         setLoading(false);
       }
     })();
-  }, []);
+  }, [checkingFinished]);
 
   function scheduleSave() {
     if (saveTimer.current) window.clearTimeout(saveTimer.current);
@@ -163,9 +191,9 @@ export default function TestWizard() {
   );
 
   async function onFinish() {
-    if (!attemptId) return;
+    if (!attemptId || finishing) return;
+    setFinishing(true);
 
-    // flush final (mejor esfuerzo)
     await flushSave();
 
     try {
@@ -175,10 +203,13 @@ export default function TestWizard() {
       if (resp.ok) window.location.href = "/student/result";
     } catch (e: any) {
       alert(`No se pudo finalizar: ${e.message}`);
+    } finally {
+      setFinishing(false);
     }
   }
 
-  if (loading) return <p style={{ margin: 24 }}>Cargando...</p>;
+  if (loading || checkingFinished)
+    return <p style={{ margin: 24 }}>Cargando...</p>;
   if (err) return <p style={{ color: "crimson" }}>{err}</p>;
 
   return (
@@ -273,7 +304,9 @@ export default function TestWizard() {
             Siguiente
           </button>
         ) : (
-          <button disabled={answeredCount < 103} onClick={onFinish}>
+          <button
+            disabled={answeredCount < 103 || finishing}
+            onClick={onFinish}>
             Finalizar
           </button>
         )}

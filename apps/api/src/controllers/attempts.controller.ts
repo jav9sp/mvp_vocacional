@@ -143,8 +143,27 @@ export async function finishAttempt(req: any, res: any) {
   if (attempt.userId !== req.auth!.userId) {
     return res.status(403).json({ ok: false, error: "Forbidden" });
   }
-  if (attempt.status !== "in_progress") {
-    return res.status(409).json({ ok: false, error: "Attempt is finished" });
+
+  // ✅ Idempotencia: si ya está finished, devuelve el result existente
+  if (attempt.status === "finished") {
+    const existingResult = await Result.findOne({
+      where: { attemptId: attempt.id },
+    });
+    if (existingResult) {
+      return res.json({
+        ok: true,
+        result: {
+          scoresByArea: existingResult.scoresByArea,
+          scoresByAreaDim: existingResult.scoresByAreaDim,
+          topAreas: existingResult.topAreas,
+        },
+      });
+    }
+    // Si por alguna razón está finished pero no hay result, seguimos y lo recalculamos.
+  } else if (attempt.status !== "in_progress") {
+    return res
+      .status(409)
+      .json({ ok: false, error: "Attempt is not finishable" });
   }
 
   // Conteo real (1 vez)
@@ -183,23 +202,44 @@ export async function finishAttempt(req: any, res: any) {
     answers: answers.map((a) => ({ questionId: a.questionId, value: a.value })),
   });
 
-  // Guardar result + cerrar attempt (todo en transacción)
-  await sequelize.transaction(async (t) => {
-    await Result.create(
-      {
-        attemptId: attempt.id,
-        scoresByArea: computed.scoresByArea,
-        scoresByAreaDim: computed.scoresByAreaDim,
-        topAreas: computed.topAreas,
-      },
-      { transaction: t }
-    );
+  try {
+    await sequelize.transaction(async (t) => {
+      // ✅ Result idempotente: findOrCreate + update
+      const [result, created] = await Result.findOrCreate({
+        where: { attemptId: attempt.id },
+        defaults: {
+          attemptId: attempt.id,
+          scoresByArea: computed.scoresByArea,
+          scoresByAreaDim: computed.scoresByAreaDim,
+          topAreas: computed.topAreas,
+        },
+        transaction: t,
+      });
 
-    attempt.status = "finished";
-    attempt.finishedAt = new Date();
-    attempt.answeredCount = answerCount; // ahora sí, real
-    await attempt.save({ transaction: t });
-  });
+      if (!created) {
+        result.scoresByArea = computed.scoresByArea;
+        result.scoresByAreaDim = computed.scoresByAreaDim;
+        result.topAreas = computed.topAreas;
+        await result.save({ transaction: t });
+      }
+
+      // Marcar attempt como finished (si ya lo estaba, igual dejamos consistente)
+      attempt.status = "finished";
+      attempt.finishedAt = attempt.finishedAt ?? new Date();
+      attempt.answeredCount = answerCount;
+      await attempt.save({ transaction: t });
+    });
+  } catch (error: any) {
+    console.error("finishAttempt error:", error);
+    console.error("finishAttempt error.parent:", error?.parent);
+    console.error("finishAttempt error.original:", error?.original);
+    return res.status(500).json({
+      ok: false,
+      error: error?.message || "finishAttempt failed",
+      sqlMessage: error?.parent?.sqlMessage || error?.original?.sqlMessage,
+      code: error?.parent?.code || error?.original?.code,
+    });
+  }
 
   return res.json({
     ok: true,
