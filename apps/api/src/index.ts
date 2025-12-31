@@ -1,13 +1,14 @@
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
-import { db, connectDB } from "./config/sequelize.ts";
+import { sequelize, connectDB } from "./config/sequelize.ts";
 
 import authRoutes from "./auth/auth.routes.ts";
 import meRoutes from "./auth/me.routes.ts";
 import testRoutes from "./routes/test.routes.ts";
 import attemptsRoutes from "./routes/attempts.routes.ts";
 import resultsRoutes from "./routes/results.routes.ts";
+import adminRoutes from "./routes/admin.routes.ts";
 
 const app = express();
 
@@ -34,7 +35,7 @@ async function bootstrap() {
 
   const isDev = process.env.NODE_ENV !== "production";
   if (isDev) {
-    await db.sync({ alter: true });
+    await sequelize.sync({ alter: true });
   }
 
   const port = Number(process.env.API_PORT || 4000);
@@ -48,8 +49,14 @@ bootstrap().catch((err) => {
   process.exit(1);
 });
 
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
 app.use("/auth", authRoutes);
 app.use("/", meRoutes);
 app.use("/test", testRoutes);
 app.use("/attempts", attemptsRoutes);
 app.use("/", resultsRoutes);
+app.use("/admin", adminRoutes);

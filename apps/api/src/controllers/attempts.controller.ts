@@ -3,7 +3,7 @@ import Attempt from "../models/Attempt.model.js";
 import Answer from "../models/Answer.model.js";
 import Question from "../models/Question.model.js";
 import Result from "../models/Result.model.js";
-import { db } from "../config/sequelize.js";
+import { sequelize } from "../config/sequelize.js";
 import { computeInapvScores } from "../services/scoring.service.ts";
 import { SaveAnswersBodySchema } from "../validators/attempts.schemas.ts";
 
@@ -95,7 +95,7 @@ export async function saveAttemptAnswers(req: any, res: any) {
   }
 
   // 3) Upsert en 1 batch
-  await db.transaction(async (t) => {
+  await sequelize.transaction(async (t) => {
     await Answer.bulkCreate(
       answers.map((a) => ({
         attemptId: attempt.id,
@@ -184,7 +184,7 @@ export async function finishAttempt(req: any, res: any) {
   });
 
   // Guardar result + cerrar attempt (todo en transacción)
-  await db.transaction(async (t) => {
+  await sequelize.transaction(async (t) => {
     await Result.create(
       {
         attemptId: attempt.id,

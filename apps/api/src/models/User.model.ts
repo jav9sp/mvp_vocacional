@@ -22,6 +22,9 @@ class User extends Model {
   @Column(DataType.INTEGER.UNSIGNED)
   declare id: number;
 
+  @Column({ allowNull: true, type: DataType.STRING(20) })
+  declare rut: string | null;
+
   @AllowNull(false)
   @Column(DataType.ENUM("admin", "student"))
   declare role: UserRole;

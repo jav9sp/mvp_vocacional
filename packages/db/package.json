@@ -8,7 +8,8 @@
     "seed": "tsx src/seed.ts",
     "seed:admin": "tsx --tsconfig ../../tsconfig.base.json --env-file ../../.env src/seed-admin.ts",
     "seed:students": "tsx --tsconfig ../../tsconfig.base.json --env-file ../../.env src/seed-students.ts",
-    "seed:inapv": "tsx --tsconfig ../../tsconfig.base.json --env-file ../../.env src/seed-inapv.ts"
+    "seed:inapv": "tsx --tsconfig ../../tsconfig.base.json --env-file ../../.env src/seed-inapv.ts",
+    "seed:structure": "tsx --tsconfig ../../tsconfig.base.json --env-file ../../.env src/seed-admin-structure.ts"
   },
   "keywords": [],
   "author": "",

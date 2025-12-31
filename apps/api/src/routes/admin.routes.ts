@@ -1,0 +1,53 @@
+import { Router } from "express";
+import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
+import { adminListPeriods } from "../controllers/admin.periods.controller.js";
+import { adminListEnrollments } from "../controllers/admin.enrollments.controller.js";
+import { adminGetAttemptResult } from "../controllers/admin.results.controller.ts";
+import { adminExportPeriodCSV } from "../controllers/admin.export.controller.ts";
+import { uploadXlsx } from "../middlewares/upload.middleware.ts";
+import { adminImportEnrollmentsXlsx } from "../controllers/admin.import.controller.ts";
+import { adminGetPeriodReport } from "../controllers/admin.report.controller.ts";
+import { adminGetPeriodReportPdf } from "../controllers/admin.report.pdf.controller.ts";
+
+const router = Router();
+
+router.get("/periods", requireAuth, requireRole("admin"), adminListPeriods);
+router.get(
+  "/periods/:periodId/enrollments",
+  requireAuth,
+  requireRole("admin"),
+  adminListEnrollments
+);
+router.get(
+  "/attempts/:attemptId/result",
+  requireAuth,
+  requireRole("admin"),
+  adminGetAttemptResult
+);
+router.get(
+  "/periods/:periodId/export.csv",
+  requireAuth,
+  requireRole("admin"),
+  adminExportPeriodCSV
+);
+router.post(
+  "/periods/:periodId/import-xlsx",
+  requireAuth,
+  requireRole("admin"),
+  uploadXlsx.single("file"),
+  adminImportEnrollmentsXlsx
+);
+router.get(
+  "/periods/:periodId/report",
+  requireAuth,
+  requireRole("admin"),
+  adminGetPeriodReport
+);
+router.get(
+  "/periods/:periodId/report.pdf",
+  requireAuth,
+  requireRole("admin"),
+  adminGetPeriodReportPdf
+);
+
+export default router;
