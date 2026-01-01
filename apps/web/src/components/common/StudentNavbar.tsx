@@ -4,15 +4,14 @@ import { api } from "../../lib/api";
 
 type NavItem = { href: string; label: string };
 
-const BASE_ITEMS: NavItem[] = [
-  { href: "/student", label: "Inicio" },
-  { href: "/student/test", label: "Test" },
-];
+const BASE_ITEMS: NavItem[] = [{ href: "/student", label: "Inicio" }];
 
 export default function StudentNavbar() {
   const [userName, setUserName] = useState<string>("");
-  const [canSeeResult, setCanSeeResult] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [testStatus, setTestStatus] = useState<
+    "loading" | "not_finished" | "finished"
+  >("loading");
 
   const path = typeof window !== "undefined" ? window.location.pathname : "";
 
@@ -23,13 +22,10 @@ export default function StudentNavbar() {
     // decidir si mostrar Resultado
     api<{ status: string }>("/me/result")
       .then((res) => {
-        if (res.status === "finished") {
-          setCanSeeResult(true);
-        }
+        setTestStatus(res.status === "finished" ? "finished" : "not_finished");
       })
       .catch(() => {
-        // fail-safe: no mostramos Resultado
-        setCanSeeResult(false);
+        setTestStatus("not_finished");
       })
       .finally(() => setLoading(false));
   }, []);
@@ -39,9 +35,17 @@ export default function StudentNavbar() {
     window.location.href = "/login";
   }
 
-  const items: NavItem[] = canSeeResult
-    ? [...BASE_ITEMS, { href: "/student/result", label: "Resultado" }]
-    : BASE_ITEMS;
+  const items: NavItem[] = (() => {
+    const list: NavItem[] = [...BASE_ITEMS];
+
+    if (testStatus === "finished") {
+      list.push({ href: "/student/result", label: "Resultados" });
+    } else {
+      list.push({ href: "/student/test", label: "Test" });
+    }
+
+    return list;
+  })();
 
   return (
     <nav
@@ -58,7 +62,7 @@ export default function StudentNavbar() {
 
         <div style={{ display: "flex", gap: 12 }}>
           {items.map((it) => {
-            const active = path === it.href;
+            const active = path === it.href || path.startsWith(it.href + "/");
             return (
               <a
                 key={it.href}

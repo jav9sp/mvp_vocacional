@@ -6,8 +6,6 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { requireAuth } from "../../lib/guards";
 import { api } from "../../lib/api";
 
-import LogoutButton from "../common/LogoutButton";
-
 type Question = {
   id: number; // DB id
   externalId: number; // 1..103
@@ -45,6 +43,39 @@ type AttemptAnswersResp = {
   answers: Array<{ questionId: number; value: boolean }>;
 };
 
+const LS_KEY = "inapv_test_cache_v1";
+
+type LocalCache = {
+  attemptId: number;
+  page: number;
+  answers: Record<number, boolean>;
+  updatedAt: number; // Date.now()
+};
+
+function loadCache(): LocalCache | null {
+  try {
+    const raw = localStorage.getItem(LS_KEY);
+    if (!raw) return null;
+    return JSON.parse(raw) as LocalCache;
+  } catch {
+    return null;
+  }
+}
+
+function saveCache(cache: LocalCache) {
+  try {
+    localStorage.setItem(LS_KEY, JSON.stringify(cache));
+  } catch {
+    // storage full / blocked: ignoramos
+  }
+}
+
+function clearCache() {
+  try {
+    localStorage.removeItem(LS_KEY);
+  } catch {}
+}
+
 const PAGE_SIZE = 10;
 const DEBOUNCE_MS = 1200;
 const MAX_BATCH = 10;
@@ -66,10 +97,55 @@ export default function TestWizard() {
     "idle" | "saving" | "saved" | "error"
   >("idle");
 
+  const pendingCount = pendingRef.current.size;
+
+  const [restored, setRestored] = useState(false);
+
   const answeredCount = useMemo(() => Object.keys(answers).length, [answers]);
+
+  useEffect(() => {
+    if (!attemptId) return;
+    // guardamos cache “suave”
+    saveCache({
+      attemptId,
+      page,
+      answers,
+      updatedAt: Date.now(),
+    });
+  }, [attemptId, page, answers]);
 
   const [checkingFinished, setCheckingFinished] = useState(true);
   const [finishing, setFinishing] = useState(false);
+
+  const [confirmOpen, setConfirmOpen] = useState(false);
+
+  const [isOnline, setIsOnline] = useState(
+    typeof navigator !== "undefined" ? navigator.onLine : true
+  );
+
+  useEffect(() => {
+    const on = () => setIsOnline(true);
+    const off = () => setIsOnline(false);
+    window.addEventListener("online", on);
+    window.addEventListener("offline", off);
+    return () => {
+      window.removeEventListener("online", on);
+      window.removeEventListener("offline", off);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (isOnline) {
+      // intenta drenar cola
+      flushSave();
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isOnline]);
+
+  const onlineRef = useRef(true);
+  useEffect(() => {
+    onlineRef.current = isOnline;
+  }, [isOnline]);
 
   useEffect(() => {
     let alive = true;
@@ -78,6 +154,7 @@ export default function TestWizard() {
       .then((r) => {
         if (!alive) return;
         if (r.status === "finished") {
+          clearCache();
           window.location.href = "/student/result";
           return;
         }
@@ -110,20 +187,41 @@ export default function TestWizard() {
         setAttemptId(data.attempt.id);
         setQuestions(data.questions);
 
+        const cached = loadCache();
+        const cachedForThisAttempt =
+          cached && cached.attemptId === data.attempt.id ? cached : null;
+
+        if (cachedForThisAttempt) setRestored(true);
+
         const existing = await api<AttemptAnswersResp>(
           `/attempts/${data.attempt.id}/answers`
         );
 
-        const initial: Record<number, boolean> = {};
-        for (const a of existing.answers) initial[a.questionId] = a.value;
+        const initialFromServer: Record<number, boolean> = {};
+        for (const a of existing.answers)
+          initialFromServer[a.questionId] = a.value;
 
-        setAnswers(initial);
+        // merge: server gana si ya tiene respuesta para ese qid
+        const merged: Record<number, boolean> = cachedForThisAttempt
+          ? { ...cachedForThisAttempt.answers, ...initialFromServer }
+          : initialFromServer;
 
-        const answered = Object.keys(initial).length;
-        const nextPage = Math.min(
+        setAnswers(merged);
+
+        const answered = Object.keys(merged).length;
+
+        const computedNextPage = Math.min(
           Math.floor(answered / PAGE_SIZE),
           Math.ceil(data.questions.length / PAGE_SIZE) - 1
         );
+
+        const nextPage = cachedForThisAttempt
+          ? Math.min(
+              cachedForThisAttempt.page,
+              Math.ceil(data.questions.length / PAGE_SIZE) - 1
+            )
+          : computedNextPage;
+
         setPage(nextPage);
 
         setLoading(false);
@@ -140,6 +238,14 @@ export default function TestWizard() {
   }
 
   async function flushSave() {
+    if (!isOnline) {
+      // dejamos los pending tal cual, se sincronizan cuando vuelva internet
+      setSaveState("idle");
+      return;
+    }
+
+    if (!onlineRef.current) return;
+
     if (!attemptId) return;
     const pending = pendingRef.current;
     if (pending.size === 0) return;
@@ -190,6 +296,13 @@ export default function TestWizard() {
     (page + 1) * PAGE_SIZE
   );
 
+  const canGoNext = useMemo(() => {
+    if (pageQuestions.length === 0) return false;
+    return pageQuestions.every((q) => answers[q.id] !== undefined);
+  }, [pageQuestions, answers]);
+
+  const isLastPage = page === totalPages - 1;
+
   async function onFinish() {
     if (!attemptId || finishing) return;
     setFinishing(true);
@@ -200,7 +313,11 @@ export default function TestWizard() {
       const resp = await api<any>(`/attempts/${attemptId}/finish`, {
         method: "POST",
       });
-      if (resp.ok) window.location.href = "/student/result";
+      if (resp.ok) {
+        clearCache();
+        setConfirmOpen(false);
+        window.location.href = "/student/result";
+      }
     } catch (e: any) {
       alert(`No se pudo finalizar: ${e.message}`);
     } finally {
@@ -208,12 +325,41 @@ export default function TestWizard() {
     }
   }
 
+  const totalQuestions = questions.length || 103;
+  const pct = totalQuestions
+    ? Math.round((answeredCount / totalQuestions) * 100)
+    : 0;
+
   if (loading || checkingFinished)
     return <p style={{ margin: 24 }}>Cargando...</p>;
   if (err) return <p style={{ color: "crimson" }}>{err}</p>;
 
   return (
     <main style={{ maxWidth: 900, margin: "24px auto", padding: 16 }}>
+      {!isOnline && (
+        <div
+          style={{
+            marginBottom: 10,
+            padding: 10,
+            borderRadius: 12,
+            background: "#fff3cd",
+            border: "1px solid #ffeeba",
+          }}>
+          Estás sin conexión. Guardaremos tus respuestas en este dispositivo y
+          sincronizaremos cuando vuelva internet.
+        </div>
+      )}
+      {restored && (
+        <div
+          style={{
+            marginBottom: 10,
+            padding: 10,
+            borderRadius: 12,
+            background: "#f2f2f2",
+          }}>
+          Recuperamos tu progreso desde este dispositivo.
+        </div>
+      )}
       <header
         style={{
           display: "flex",
@@ -222,34 +368,51 @@ export default function TestWizard() {
         }}>
         <div>
           <h1 style={{ margin: 0 }}>INAP-V</h1>
-          <p style={{ margin: "8px 0" }}>
-            Progreso: <b>{answeredCount}</b>/103 · Página {page + 1}/
-            {totalPages}
-          </p>
         </div>
-        <small>
-          {saveState === "saving" && "Guardando..."}
-          {saveState === "saved" && "Guardado ✓"}
-          {saveState === "error" && "Error al guardar (reintentando)"}
-        </small>
-        <LogoutButton />
       </header>
-
       <div
         style={{
-          height: 8,
-          background: "#eee",
-          borderRadius: 999,
-          overflow: "hidden",
-          margin: "12px 0 20px",
+          border: "1px solid #eee",
+          borderRadius: 14,
+          padding: 12,
+          marginBottom: 12,
         }}>
         <div
           style={{
-            width: `${(answeredCount / 103) * 100}%`,
-            height: "100%",
-            background: "#222",
-          }}
-        />
+            display: "flex",
+            justifyContent: "space-between",
+            color: "#666",
+            fontSize: 12,
+          }}>
+          <span>Progreso</span>
+          <span>
+            {answeredCount}/{totalQuestions} ({pct}%)
+          </span>
+        </div>
+
+        <div
+          style={{
+            height: 10,
+            background: "#eee",
+            borderRadius: 999,
+            overflow: "hidden",
+            marginTop: 6,
+          }}>
+          <div
+            style={{ height: "100%", width: `${pct}%`, background: "#111" }}
+          />
+        </div>
+
+        <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+          {!isOnline &&
+            pendingCount > 0 &&
+            `Pendientes de sincronizar: ${pendingCount}`}
+          {isOnline && saveState === "saving" && "Guardando..."}
+          {isOnline && saveState === "saved" && "✓ Guardado"}
+          {isOnline &&
+            saveState === "error" &&
+            "Error al guardar (reintentando...)"}
+        </div>
       </div>
 
       <section style={{ display: "grid", gap: 14 }}>
@@ -286,36 +449,129 @@ export default function TestWizard() {
         ))}
       </section>
 
-      <footer
+      <div
         style={{
           display: "flex",
           justifyContent: "space-between",
-          marginTop: 18,
+          alignItems: "center",
+          marginTop: 12,
         }}>
         <button
-          disabled={page === 0}
-          onClick={() => setPage((p) => Math.max(0, p - 1))}>
+          onClick={() => setPage((p) => Math.max(p - 1, 0))}
+          disabled={page === 0}>
           Atrás
         </button>
 
-        {page < totalPages - 1 ? (
+        <span style={{ color: "#666", fontSize: 12 }}>
+          Página {page + 1} de {totalPages}
+        </span>
+
+        {!isLastPage ? (
           <button
-            onClick={() => setPage((p) => Math.min(totalPages - 1, p + 1))}>
+            onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
+            disabled={!canGoNext}>
             Siguiente
           </button>
         ) : (
           <button
-            disabled={answeredCount < 103 || finishing}
-            onClick={onFinish}>
+            onClick={() => setConfirmOpen(true)}
+            disabled={!canGoNext || finishing}>
             Finalizar
           </button>
         )}
-      </footer>
+      </div>
 
       {answeredCount < 103 && page === totalPages - 1 && (
         <p style={{ color: "#666", marginTop: 10 }}>
           Para finalizar debes responder las 103 preguntas.
         </p>
+      )}
+      {confirmOpen && (
+        <div
+          onClick={() => !finishing && setConfirmOpen(false)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            background: "rgba(0,0,0,0.35)",
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            padding: 16,
+            zIndex: 50,
+          }}>
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              width: "min(520px, 100%)",
+              background: "#fff",
+              borderRadius: 16,
+              border: "1px solid #eee",
+              overflow: "hidden",
+            }}>
+            <div style={{ padding: 14, borderBottom: "1px solid #eee" }}>
+              <b>Confirmar envío</b>
+            </div>
+
+            <div style={{ padding: 14, display: "grid", gap: 10 }}>
+              <p style={{ margin: 0 }}>
+                Estás a punto de <b>finalizar</b> el test y enviar tus
+                respuestas.
+              </p>
+
+              <div
+                style={{
+                  border: "1px solid #eee",
+                  borderRadius: 12,
+                  padding: 12,
+                }}>
+                <div style={{ color: "#666", fontSize: 12 }}>Progreso</div>
+                <div style={{ fontWeight: 800, fontSize: 16 }}>
+                  {answeredCount}/{questions.length || 103}
+                </div>
+              </div>
+
+              <p style={{ margin: 0, color: "#b45309" }}>
+                ⚠️ Al finalizar, no podrás modificar tus respuestas.
+              </p>
+
+              {saveState === "saving" && (
+                <p style={{ margin: 0, color: "#666", fontSize: 12 }}>
+                  Guardando cambios antes de finalizar…
+                </p>
+              )}
+
+              {saveState === "error" && (
+                <p style={{ margin: 0, color: "crimson", fontSize: 12 }}>
+                  Hay cambios pendientes (reintentando guardado). Si puedes,
+                  espera unos segundos.
+                </p>
+              )}
+
+              <div
+                style={{
+                  display: "flex",
+                  justifyContent: "flex-end",
+                  gap: 10,
+                  marginTop: 6,
+                }}>
+                <button
+                  onClick={() => setConfirmOpen(false)}
+                  disabled={finishing}>
+                  Cancelar
+                </button>
+
+                <button
+                  onClick={async () => {
+                    // aquí sí finalizamos
+                    await onFinish();
+                  }}
+                  disabled={finishing}>
+                  {finishing ? "Finalizando..." : "Sí, finalizar"}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
       )}
     </main>
   );
