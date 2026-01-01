@@ -37,28 +37,31 @@ export default function LoginForm() {
   }
 
   return (
-    <form onSubmit={onSubmit} style={{ display: "grid", gap: 12 }}>
-      <label>
-        Email
+    <form onSubmit={onSubmit} className="grid gap-3">
+      <label className="grid gap-1 text-sm">
+        <span className="font-medium">Email</span>
         <input
           value={email}
           onChange={(e) => setEmail(e.target.value)}
-          style={{ width: "100%" }}
+          className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[rgba(17,24,39,0.15)]"
         />
       </label>
-      <label>
-        Password
+
+      <label className="grid gap-1 text-sm">
+        <span className="font-medium">Password</span>
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          style={{ width: "100%" }}
+          className="w-full rounded-md border border-border bg-white px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-[rgba(17,24,39,0.15)]"
         />
       </label>
-      <button disabled={loading} type="submit">
+
+      <button disabled={loading} type="submit" className="btn btn-primary">
         {loading ? "Entrando..." : "Entrar"}
       </button>
-      {error && <p style={{ color: "crimson" }}>{error}</p>}
+
+      {error && <p className="text-danger">{error}</p>}
     </form>
   );
 }

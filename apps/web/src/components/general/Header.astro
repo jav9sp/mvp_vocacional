@@ -1,0 +1,35 @@
+---
+const pathname = Astro.originPathname;
+---
+
+<header class="mx-auto max-w-275 px-6 py-6">
+  <nav class="flex items-center justify-between gap-4">
+    <a href="/" class="flex items-center gap-2">
+      <span
+        class="inline-flex h-9 w-9 items-center justify-center rounded-md bg-primary text-white font-semibold">
+        PV
+      </span>
+      <span class="text-base font-semibold tracking-tight"
+        >Portal Vocacional</span
+      >
+    </a>
+
+    <div class="flex items-center gap-2">
+      <a href="/" class="btn btn-secondary">Inicio</a>
+
+      {
+        pathname === "/" && (
+          <div>
+            <a href="#como-funciona" class="btn btn-secondary">
+              Cómo funciona
+            </a>
+            <a href="/login" class="btn btn-secondary">
+              Ingresar
+            </a>
+          </div>
+        )
+      }
+      <a href="/register" class="btn btn-primary">Crear cuenta</a>
+    </div>
+  </nav>
+</header>

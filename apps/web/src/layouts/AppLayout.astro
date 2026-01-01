@@ -1,0 +1,21 @@
+---
+import "../styles/global.css";
+
+interface Props {
+  role: string;
+}
+
+const { role } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>{`Portal Vocacional - ${role}`}</title>
+  </head>
+  <body>
+    <slot />
+  </body>
+</html>

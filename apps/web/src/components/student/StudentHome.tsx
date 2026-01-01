@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { requireAuth } from "../../lib/guards";
 import { api } from "../../lib/api";
+import LogoutButton from "../common/LogoutButton";
 
 type CurrentTestResp = {
   ok: boolean;
@@ -42,112 +43,112 @@ export default function StudentHome() {
     return "No iniciado";
   }, [data]);
 
+  const statusPill = useMemo(() => {
+    if (!data) return "bg-slate-100 text-slate-600";
+    if (data.attempt.status === "finished")
+      return "bg-emerald-100 text-emerald-800";
+    if (data.attempt.answeredCount > 0) return "bg-amber-100 text-amber-800";
+    return "bg-slate-100 text-slate-700";
+  }, [data]);
+
   const answered = data?.attempt.answeredCount ?? 0;
   const pct = Math.min(100, Math.round((answered / total) * 100));
 
   const cta = useMemo(() => {
     if (!data) return { href: "/student/test", label: "Ir al test" };
 
-    if (data.attempt.status === "finished") {
+    if (data.attempt.status === "finished")
       return { href: "/student/result", label: "Ver resultados" };
-    }
-    if (data.attempt.answeredCount > 0) {
+    if (data.attempt.answeredCount > 0)
       return { href: "/student/test", label: "Continuar test" };
-    }
     return { href: "/student/test", label: "Comenzar test" };
   }, [data]);
 
-  if (loading) return <p style={{ margin: 24 }}>Cargando...</p>;
-  if (err) return <p style={{ margin: 24, color: "crimson" }}>{err}</p>;
+  if (loading) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <div className="card">
+          <p className="text-sm text-muted">Cargando...</p>
+        </div>
+      </main>
+    );
+  }
+
+  if (err) {
+    return (
+      <main className="mx-auto max-w-3xl px-4 py-8">
+        <div className="card border-red-200">
+          <p className="text-sm text-red-600">{err}</p>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <main style={{ maxWidth: 900, margin: "24px auto", padding: 16 }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-        }}>
+    <main className="mx-auto max-w-3xl px-4 py-8 space-y-4">
+      {/* Header */}
+      <header className="flex items-start justify-between gap-4">
         <div>
-          <h1 style={{ margin: 0 }}>Inicio</h1>
-          <p style={{ margin: "6px 0", color: "#555" }}>
-            Estado del test: <b>{statusLabel}</b>
-          </p>
+          <h1 className="text-2xl font-extrabold tracking-tight">Inicio</h1>
+          <div className="mt-2 flex items-center gap-2">
+            <span className="text-sm text-muted">Estado del test:</span>
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold ${statusPill}`}>
+              {statusLabel}
+            </span>
+          </div>
         </div>
       </header>
 
-      <section style={{ display: "grid", gap: 12, marginTop: 16 }}>
-        <div
-          style={{ border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
-          <div
-            style={{
-              display: "flex",
-              justifyContent: "space-between",
-              gap: 12,
-              alignItems: "baseline",
-            }}>
-            <div>
-              <div style={{ color: "#666", fontSize: 12 }}>Test activo</div>
-              <div style={{ fontWeight: 800, fontSize: 18 }}>
-                {data?.test?.name || "INAP-V"}
-              </div>
-              <div style={{ color: "#666", fontSize: 12 }}>
-                {data?.test?.key} · {data?.test?.version}
-              </div>
+      {/* Card principal */}
+      <section className="card space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+          <div className="space-y-1">
+            <div className="text-xs text-muted">Test activo</div>
+            <div className="text-lg font-extrabold">
+              {data?.test?.name || "INAP-V"}
             </div>
-
-            <a href={cta.href} style={{ textDecoration: "none" }}>
-              <button style={{ padding: "10px 14px", borderRadius: 12 }}>
-                {cta.label}
-              </button>
-            </a>
+            <div className="text-xs text-muted">
+              {data?.test?.key} · {data?.test?.version}
+            </div>
           </div>
 
-          <div style={{ marginTop: 12 }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                color: "#666",
-                fontSize: 12,
-              }}>
-              <span>Progreso</span>
-              <span>
-                {answered}/{total} ({pct}%)
-              </span>
-            </div>
-            <div
-              style={{
-                height: 10,
-                background: "#eee",
-                borderRadius: 999,
-                overflow: "hidden",
-                marginTop: 6,
-              }}>
-              <div
-                style={{ height: "100%", width: `${pct}%`, background: "#111" }}
-              />
-            </div>
+          <a href={cta.href} className="sm:self-center">
+            <button className="btn btn-primary w-full sm:w-auto">
+              {cta.label}
+            </button>
+          </a>
+        </div>
+
+        {/* Progreso */}
+        <div className="space-y-2">
+          <div className="flex items-center justify-between text-xs text-muted">
+            <span>Progreso</span>
+            <span>
+              {answered}/{total} ({pct}%)
+            </span>
+          </div>
+
+          <div className="h-2 w-full rounded-full bg-slate-200 overflow-hidden">
+            <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
           </div>
 
           {data?.attempt.status === "finished" && (
-            <p style={{ marginTop: 10, color: "#116b3b" }}>
+            <p className="text-sm text-emerald-700">
               ✓ Ya completaste el test. Puedes ver tus resultados cuando
               quieras.
             </p>
           )}
         </div>
+      </section>
 
-        {/* Sugerencia UX extra */}
-        <div
-          style={{ border: "1px solid #eee", borderRadius: 14, padding: 14 }}>
-          <b>Recomendación</b>
-          <p style={{ margin: "6px 0", color: "#555" }}>
-            Responde con calma y honestidad. No hay respuestas correctas o
-            incorrectas.
-          </p>
-        </div>
+      {/* Card recomendación */}
+      <section className="card">
+        <h2 className="font-bold">Recomendación</h2>
+        <p className="mt-1 text-sm text-muted">
+          Responde con calma y honestidad. No hay respuestas correctas o
+          incorrectas.
+        </p>
       </section>
     </main>
   );

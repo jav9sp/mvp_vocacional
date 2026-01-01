@@ -59,73 +59,43 @@ export default function StudentDetailModal({ open, onClose, row }: Props) {
   return (
     <div
       onClick={onClose}
-      style={{
-        position: "fixed",
-        inset: 0,
-        background: "rgba(0,0,0,0.35)",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        padding: 16,
-        zIndex: 50,
-      }}>
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[rgba(0,0,0,0.35)] p-4">
       <div
         onClick={(e) => e.stopPropagation()}
-        style={{
-          width: "min(920px, 100%)",
-          background: "#fff",
-          borderRadius: 16,
-          border: "1px solid #eee",
-          overflow: "hidden",
-        }}>
-        <div
-          style={{
-            padding: 14,
-            borderBottom: "1px solid #eee",
-            display: "flex",
-            justifyContent: "space-between",
-          }}>
+        className="w-full max-w-230 overflow-hidden rounded-[16px] border border-border bg-white">
+        {/* Header */}
+        <div className="flex items-start justify-between gap-3 border-b border-border p-3.5">
           <div>
             <b>Detalle estudiante</b>
-            <div style={{ color: "#666", fontSize: 12 }}>
+            <div className="text-xs text-muted">
               {row?.student?.name}{" "}
               {row?.student?.email ? `· ${row.student.email}` : ""}
             </div>
           </div>
-          <button onClick={onClose}>Cerrar</button>
+
+          <button onClick={onClose} className="btn btn-secondary">
+            Cerrar
+          </button>
         </div>
 
-        <div style={{ padding: 14, display: "grid", gap: 12 }}>
-          <div style={{ display: "flex", gap: 12, flexWrap: "wrap" }}>
-            <div
-              style={{
-                border: "1px solid #eee",
-                borderRadius: 12,
-                padding: 12,
-              }}>
-              <div style={{ color: "#666", fontSize: 12 }}>Estado</div>
-              <div style={{ fontWeight: 700 }}>{row?.progressStatus}</div>
+        {/* Body */}
+        <div className="grid gap-3 p-3.5">
+          <div className="flex flex-wrap gap-3">
+            <div className="rounded-xl border border-border p-3">
+              <div className="text-xs text-muted">Estado</div>
+              <div className="font-bold">{row?.progressStatus}</div>
             </div>
-            <div
-              style={{
-                border: "1px solid #eee",
-                borderRadius: 12,
-                padding: 12,
-              }}>
-              <div style={{ color: "#666", fontSize: 12 }}>Progreso</div>
-              <div style={{ fontWeight: 700 }}>
+
+            <div className="rounded-xl border border-border p-3">
+              <div className="text-xs text-muted">Progreso</div>
+              <div className="font-bold">
                 {row?.attempt ? `${row.attempt.answeredCount}/103` : "—"}
               </div>
             </div>
-            <div
-              style={{
-                border: "1px solid #eee",
-                borderRadius: 12,
-                padding: 12,
-                flex: "1 1 220px",
-              }}>
-              <div style={{ color: "#666", fontSize: 12 }}>Top áreas</div>
-              <div style={{ fontWeight: 700 }}>
+
+            <div className="flex-1 basis-55 rounded-xl border border-border p-3">
+              <div className="text-xs text-muted">Top áreas</div>
+              <div className="font-bold">
                 {row?.result?.topAreas?.length
                   ? row.result.topAreas.map(areaName).join(", ")
                   : "—"}
@@ -134,94 +104,53 @@ export default function StudentDetailModal({ open, onClose, row }: Props) {
           </div>
 
           {!attemptId && (
-            <p style={{ color: "#666" }}>
+            <p className="text-muted">
               Este estudiante aún no tiene intento asociado para este
               test/periodo.
             </p>
           )}
 
-          {attemptId && loading && <p>Cargando resultados...</p>}
-          {attemptId && error && <p style={{ color: "crimson" }}>{error}</p>}
+          {attemptId && loading && (
+            <p className="text-sm">Cargando resultados...</p>
+          )}
+          {attemptId && error && <p className="text-danger">{error}</p>}
 
           {attemptId && data?.result && (
             <>
-              <h3 style={{ margin: "8px 0 0" }}>Puntajes por área</h3>
-              <div
-                style={{
-                  overflowX: "auto",
-                  border: "1px solid #eee",
-                  borderRadius: 12,
-                }}>
-                <table style={{ width: "100%", borderCollapse: "collapse" }}>
-                  <thead style={{ background: "#fafafa" }}>
+              <h3 className="mt-2 text-lg font-semibold">Puntajes por área</h3>
+
+              <div className="overflow-x-auto rounded-xl border border-border">
+                <table className="w-full border-collapse text-sm">
+                  <thead className="bg-surface">
                     <tr>
-                      <th
-                        style={{
-                          textAlign: "left",
-                          padding: 10,
-                          borderBottom: "1px solid #eee",
-                        }}>
+                      <th className="border-b border-border p-2.5 text-left font-semibold">
                         Área
                       </th>
-                      <th
-                        style={{
-                          textAlign: "right",
-                          padding: 10,
-                          borderBottom: "1px solid #eee",
-                        }}>
+                      <th className="border-b border-border p-2.5 text-right font-semibold">
                         Interés
                       </th>
-                      <th
-                        style={{
-                          textAlign: "right",
-                          padding: 10,
-                          borderBottom: "1px solid #eee",
-                        }}>
+                      <th className="border-b border-border p-2.5 text-right font-semibold">
                         Aptitud
                       </th>
-                      <th
-                        style={{
-                          textAlign: "right",
-                          padding: 10,
-                          borderBottom: "1px solid #eee",
-                        }}>
+                      <th className="border-b border-border p-2.5 text-right font-semibold">
                         Total
                       </th>
                     </tr>
                   </thead>
+
                   <tbody>
                     {rows.map((r) => (
-                      <tr key={r.area}>
-                        <td
-                          style={{
-                            padding: 10,
-                            borderBottom: "1px solid #f2f2f2",
-                          }}>
+                      <tr key={r.area} className="hover:bg-surface">
+                        <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5">
                           {areaName(r.area)}
                         </td>
-                        <td
-                          style={{
-                            padding: 10,
-                            textAlign: "right",
-                            borderBottom: "1px solid #f2f2f2",
-                          }}>
+                        <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5 text-right">
                           {r.interes}
                         </td>
-                        <td
-                          style={{
-                            padding: 10,
-                            textAlign: "right",
-                            borderBottom: "1px solid #f2f2f2",
-                          }}>
+                        <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5 text-right">
                           {r.aptitud}
                         </td>
-                        <td
-                          style={{
-                            padding: 10,
-                            textAlign: "right",
-                            borderBottom: "1px solid #f2f2f2",
-                            fontWeight: 700,
-                          }}>
+                        <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5 text-right font-bold">
                           {r.total}
                         </td>
                       </tr>
@@ -233,7 +162,7 @@ export default function StudentDetailModal({ open, onClose, row }: Props) {
           )}
 
           {attemptId && data && !data.result && (
-            <p style={{ color: "#666" }}>
+            <p className="text-muted">
               El intento existe, pero aún no hay resultado (no finalizado).
             </p>
           )}

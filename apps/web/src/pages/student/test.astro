@@ -1,10 +1,10 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import AppLayout from "../../layouts/AppLayout.astro";
 import StudentNavbar from "../../components/common/StudentNavbar";
 import TestWizard from "../../components/student/TestWizard";
 ---
 
-<BaseLayout title="Test">
+<AppLayout role="Estudiante">
   <StudentNavbar client:load />
   <TestWizard client:load />
-</BaseLayout>
+</AppLayout>

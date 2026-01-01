@@ -335,75 +335,39 @@ export default function TestWizard() {
   if (err) return <p style={{ color: "crimson" }}>{err}</p>;
 
   return (
-    <main style={{ maxWidth: 900, margin: "24px auto", padding: 16 }}>
+    <main className="mx-auto max-w-225 px-4 py-6">
       {!isOnline && (
-        <div
-          style={{
-            marginBottom: 10,
-            padding: 10,
-            borderRadius: 12,
-            background: "#fff3cd",
-            border: "1px solid #ffeeba",
-          }}>
+        <div className="mb-2.5 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-900">
           Estás sin conexión. Guardaremos tus respuestas en este dispositivo y
           sincronizaremos cuando vuelva internet.
         </div>
       )}
+
       {restored && (
-        <div
-          style={{
-            marginBottom: 10,
-            padding: 10,
-            borderRadius: 12,
-            background: "#f2f2f2",
-          }}>
+        <div className="mb-2.5 rounded-xl bg-slate-100 px-3 py-2 text-sm text-slate-700">
           Recuperamos tu progreso desde este dispositivo.
         </div>
       )}
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "baseline",
-        }}>
+
+      <header className="flex items-baseline justify-between">
         <div>
-          <h1 style={{ margin: 0 }}>INAP-V</h1>
+          <h1 className="m-0 text-2xl font-extrabold tracking-tight">INAP-V</h1>
         </div>
       </header>
-      <div
-        style={{
-          border: "1px solid #eee",
-          borderRadius: 14,
-          padding: 12,
-          marginBottom: 12,
-        }}>
-        <div
-          style={{
-            display: "flex",
-            justifyContent: "space-between",
-            color: "#666",
-            fontSize: 12,
-          }}>
+
+      <div className="mb-3 rounded-2xl border border-slate-200 p-3">
+        <div className="flex justify-between text-xs text-slate-600">
           <span>Progreso</span>
           <span>
             {answeredCount}/{totalQuestions} ({pct}%)
           </span>
         </div>
 
-        <div
-          style={{
-            height: 10,
-            background: "#eee",
-            borderRadius: 999,
-            overflow: "hidden",
-            marginTop: 6,
-          }}>
-          <div
-            style={{ height: "100%", width: `${pct}%`, background: "#111" }}
-          />
+        <div className="mt-1.5 h-2.5 overflow-hidden rounded-full bg-slate-200">
+          <div className="h-full bg-primary" style={{ width: `${pct}%` }} />
         </div>
 
-        <div style={{ marginTop: 8, fontSize: 12, color: "#666" }}>
+        <div className="mt-2 text-xs text-slate-600">
           {!isOnline &&
             pendingCount > 0 &&
             `Pendientes de sincronizar: ${pendingCount}`}
@@ -415,18 +379,16 @@ export default function TestWizard() {
         </div>
       </div>
 
-      <section style={{ display: "grid", gap: 14 }}>
+      <section className="grid gap-3.5">
         {pageQuestions.map((q) => (
-          <div
-            key={q.id}
-            style={{ border: "1px solid #ddd", borderRadius: 12, padding: 12 }}>
-            <div style={{ display: "flex", gap: 8, alignItems: "baseline" }}>
+          <div key={q.id} className="rounded-xl border border-slate-200 p-3">
+            <div className="flex items-baseline gap-2">
               <b>#{q.externalId}</b>
               <span>{q.text}</span>
             </div>
 
-            <div style={{ display: "flex", gap: 12, marginTop: 10 }}>
-              <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
+            <div className="mt-2.5 flex gap-4">
+              <label className="flex items-center gap-2">
                 <input
                   type="radio"
                   name={`q_${q.id}`}
@@ -435,7 +397,8 @@ export default function TestWizard() {
                 />
                 Sí
               </label>
-              <label style={{ display: "flex", gap: 6, alignItems: "center" }}>
+
+              <label className="flex items-center gap-2">
                 <input
                   type="radio"
                   name={`q_${q.id}`}
@@ -449,31 +412,28 @@ export default function TestWizard() {
         ))}
       </section>
 
-      <div
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          marginTop: 12,
-        }}>
+      <div className="mt-3 flex items-center justify-between">
         <button
+          className="btn btn-secondary"
           onClick={() => setPage((p) => Math.max(p - 1, 0))}
           disabled={page === 0}>
           Atrás
         </button>
 
-        <span style={{ color: "#666", fontSize: 12 }}>
+        <span className="text-xs text-slate-600">
           Página {page + 1} de {totalPages}
         </span>
 
         {!isLastPage ? (
           <button
+            className="btn btn-primary"
             onClick={() => setPage((p) => Math.min(p + 1, totalPages - 1))}
             disabled={!canGoNext}>
             Siguiente
           </button>
         ) : (
           <button
+            className="btn btn-primary"
             onClick={() => setConfirmOpen(true)}
             disabled={!canGoNext || finishing}>
             Finalizar
@@ -482,85 +442,62 @@ export default function TestWizard() {
       </div>
 
       {answeredCount < 103 && page === totalPages - 1 && (
-        <p style={{ color: "#666", marginTop: 10 }}>
+        <p className="mt-2.5 text-sm text-slate-600">
           Para finalizar debes responder las 103 preguntas.
         </p>
       )}
+
       {confirmOpen && (
         <div
           onClick={() => !finishing && setConfirmOpen(false)}
-          style={{
-            position: "fixed",
-            inset: 0,
-            background: "rgba(0,0,0,0.35)",
-            display: "flex",
-            justifyContent: "center",
-            alignItems: "center",
-            padding: 16,
-            zIndex: 50,
-          }}>
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
           <div
             onClick={(e) => e.stopPropagation()}
-            style={{
-              width: "min(520px, 100%)",
-              background: "#fff",
-              borderRadius: 16,
-              border: "1px solid #eee",
-              overflow: "hidden",
-            }}>
-            <div style={{ padding: 14, borderBottom: "1px solid #eee" }}>
+            className="w-full max-w-130 overflow-hidden rounded-2xl border border-slate-200 bg-white">
+            <div className="border-b border-slate-200 p-3.5">
               <b>Confirmar envío</b>
             </div>
 
-            <div style={{ padding: 14, display: "grid", gap: 10 }}>
-              <p style={{ margin: 0 }}>
+            <div className="grid gap-2.5 p-3.5">
+              <p className="m-0">
                 Estás a punto de <b>finalizar</b> el test y enviar tus
                 respuestas.
               </p>
 
-              <div
-                style={{
-                  border: "1px solid #eee",
-                  borderRadius: 12,
-                  padding: 12,
-                }}>
-                <div style={{ color: "#666", fontSize: 12 }}>Progreso</div>
-                <div style={{ fontWeight: 800, fontSize: 16 }}>
+              <div className="rounded-xl border border-slate-200 p-3">
+                <div className="text-xs text-slate-600">Progreso</div>
+                <div className="text-base font-extrabold">
                   {answeredCount}/{questions.length || 103}
                 </div>
               </div>
 
-              <p style={{ margin: 0, color: "#b45309" }}>
+              <p className="m-0 text-amber-700">
                 ⚠️ Al finalizar, no podrás modificar tus respuestas.
               </p>
 
               {saveState === "saving" && (
-                <p style={{ margin: 0, color: "#666", fontSize: 12 }}>
+                <p className="m-0 text-xs text-slate-600">
                   Guardando cambios antes de finalizar…
                 </p>
               )}
 
               {saveState === "error" && (
-                <p style={{ margin: 0, color: "crimson", fontSize: 12 }}>
+                <p className="m-0 text-xs text-red-600">
                   Hay cambios pendientes (reintentando guardado). Si puedes,
                   espera unos segundos.
                 </p>
               )}
 
-              <div
-                style={{
-                  display: "flex",
-                  justifyContent: "flex-end",
-                  gap: 10,
-                  marginTop: 6,
-                }}>
+              <div className="mt-1.5 flex justify-end gap-2.5">
                 <button
+                  className="btn btn-secondary"
                   onClick={() => setConfirmOpen(false)}
                   disabled={finishing}>
                   Cancelar
                 </button>
 
                 <button
+                  className="btn btn-primary"
                   onClick={async () => {
                     // aquí sí finalizamos
                     await onFinish();

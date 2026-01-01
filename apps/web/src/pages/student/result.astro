@@ -1,10 +1,10 @@
 ---
-import BaseLayout from "../../layouts/BaseLayout.astro";
+import AppLayout from "../../layouts/AppLayout.astro";
 import StudentNavbar from "../../components/common/StudentNavbar";
 import ResultView from "../../components/student/ResultView";
 ---
 
-<BaseLayout title="Resultado">
+<AppLayout role="Estudiante">
   <StudentNavbar client:load />
   <ResultView client:load />
-</BaseLayout>
+</AppLayout>

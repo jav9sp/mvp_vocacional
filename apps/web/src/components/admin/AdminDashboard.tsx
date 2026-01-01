@@ -67,19 +67,7 @@ type ReportResp = {
   };
 };
 
-function badgeStyle(kind: "gray" | "green" | "yellow") {
-  const bg =
-    kind === "green" ? "#e7f7ee" : kind === "yellow" ? "#fff6db" : "#f2f2f2";
-  const color =
-    kind === "green" ? "#116b3b" : kind === "yellow" ? "#7a5a00" : "#444";
-  return {
-    background: bg,
-    color,
-    padding: "4px 10px",
-    borderRadius: 999,
-    fontSize: 12,
-  };
-}
+const badgeClass = (kind: "gray" | "green" | "yellow") => `badge badge-${kind}`;
 
 export default function AdminDashboard() {
   const [loading, setLoading] = useState(true);
@@ -211,24 +199,21 @@ export default function AdminDashboard() {
   if (error) return <p style={{ color: "crimson", margin: 24 }}>{error}</p>;
 
   return (
-    <main style={{ maxWidth: 1100, margin: "24px auto", padding: 16 }}>
-      <header
-        style={{
-          display: "flex",
-          justifyContent: "space-between",
-          alignItems: "center",
-          gap: 12,
-        }}>
+    <main className="mx-auto my-6 max-w-275 p-4">
+      <header className="flex items-center justify-between gap-3">
         <div>
-          <h1 style={{ margin: 0 }}>Admin</h1>
-          <p style={{ margin: "6px 0", color: "#555" }}>
+          <h1 className="m-0 text-xl font-semibold">Admin</h1>
+          <p className="my-1.5 text-muted">
             Organización: <b>{orgName || "—"}</b>
           </p>
         </div>
-        <button onClick={logout}>Cerrar sesión</button>
+
+        <button onClick={logout} className="btn btn-secondary">
+          Cerrar sesión
+        </button>
       </header>
 
-      <label style={{ display: "inline-flex", gap: 8, alignItems: "center" }}>
+      <label className="inline-flex items-center gap-2">
         <input
           type="file"
           accept=".xlsx"
@@ -241,37 +226,32 @@ export default function AdminDashboard() {
             } catch (err: any) {
               setImportMsg(`Error: ${err.message}`);
             } finally {
-              // reset input para poder subir el mismo archivo otra vez
               e.currentTarget.value = "";
               setImporting(false);
             }
           }}
+          className="text-sm disabled:opacity-50"
         />
       </label>
 
       {importMsg && (
         <p
-          style={{
-            margin: "8px 0",
-            color: importMsg.startsWith("Error") ? "crimson" : "#116b3b",
-          }}>
+          className={[
+            "my-2",
+            importMsg.startsWith("Error") ? "text-danger" : "text-success",
+          ].join(" ")}>
           {importMsg}
         </p>
       )}
 
-      <section style={{ display: "grid", gap: 12, marginTop: 16 }}>
-        <div
-          style={{
-            display: "flex",
-            gap: 12,
-            alignItems: "center",
-            flexWrap: "wrap",
-          }}>
-          <label style={{ display: "flex", gap: 8, alignItems: "center" }}>
+      <section className="mt-4 grid gap-3">
+        <div className="flex flex-wrap items-center gap-3">
+          <label className="flex items-center gap-2">
             Periodo:
             <select
               value={selectedPeriodId ?? ""}
-              onChange={(e) => setSelectedPeriodId(Number(e.target.value))}>
+              onChange={(e) => setSelectedPeriodId(Number(e.target.value))}
+              className="rounded-md border border-border bg-white px-2 py-1 text-sm">
               {periods.map((p) => (
                 <option key={p.id} value={p.id}>
                   {p.name} ({p.status})
@@ -284,134 +264,59 @@ export default function AdminDashboard() {
             placeholder="Buscar por nombre o email..."
             value={query}
             onChange={(e) => setQuery(e.target.value)}
-            style={{
-              flex: "1 1 260px",
-              padding: 8,
-              borderRadius: 10,
-              border: "1px solid #ddd",
-            }}
+            className="flex-1 basis-65 rounded-[10px] border border-border px-2 py-2 text-sm"
           />
         </div>
 
-        <section style={{ display: "grid", gap: 12 }}>
-          <div
-            style={{
-              border: "1px solid #eee",
-              borderRadius: 14,
-              padding: 12,
-              display: "grid",
-              gap: 12,
-            }}>
-            <div
-              style={{
-                display: "flex",
-                justifyContent: "space-between",
-                alignItems: "baseline",
-                gap: 12,
-              }}>
+        <section className="grid gap-3">
+          {/* Resumen */}
+          <div className="grid gap-3 rounded-[14px] border border-border bg-white p-3">
+            <div className="flex items-baseline justify-between gap-3">
               <b>Resumen del periodo</b>
-              <span style={{ color: "#666", fontSize: 12 }}>
-                {loadingReport ? "Cargando..." : report ? `Actualizado` : "—"}
+              <span className="text-xs text-muted">
+                {loadingReport ? "Cargando..." : report ? "Actualizado" : "—"}
               </span>
             </div>
 
             {!report && !loadingReport && (
-              <p style={{ color: "#666", margin: 0 }}>
-                No hay datos de reporte.
-              </p>
+              <p className="m-0 text-muted">No hay datos de reporte.</p>
             )}
 
             {(loadingReport || report) && (
-              <div style={{ display: "grid", gap: 12 }}>
+              <div className="grid gap-3">
                 {/* KPIs */}
-                <div
-                  style={{
-                    display: "grid",
-                    gap: 10,
-                    gridTemplateColumns: "repeat(auto-fit, minmax(170px, 1fr))",
-                  }}>
-                  <div
-                    style={{
-                      border: "1px solid #eee",
-                      borderRadius: 12,
-                      padding: 10,
-                    }}>
-                    <div style={{ color: "#666", fontSize: 12 }}>Inscritos</div>
-                    <div style={{ fontWeight: 800, fontSize: 18 }}>
-                      {report?.totals.enrolled ?? "—"}
+                <div className="grid gap-2.5 grid-cols-[repeat(auto-fit,minmax(170px,1fr))]">
+                  {[
+                    ["Inscritos", report?.totals.enrolled ?? "—"],
+                    ["No iniciado", report?.totals.notStarted ?? "—"],
+                    ["En progreso", report?.totals.inProgress ?? "—"],
+                    ["Finalizados", report?.totals.finished ?? "—"],
+                    [
+                      "% finalización",
+                      report ? `${report.totals.completionRate}%` : "—",
+                    ],
+                  ].map(([label, value]) => (
+                    <div
+                      key={String(label)}
+                      className="rounded-xl border border-border bg-white p-2.5">
+                      <div className="text-xs text-muted">{label}</div>
+                      <div className="text-lg font-extrabold">{value}</div>
                     </div>
-                  </div>
-                  <div
-                    style={{
-                      border: "1px solid #eee",
-                      borderRadius: 12,
-                      padding: 10,
-                    }}>
-                    <div style={{ color: "#666", fontSize: 12 }}>
-                      No iniciado
-                    </div>
-                    <div style={{ fontWeight: 800, fontSize: 18 }}>
-                      {report?.totals.notStarted ?? "—"}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      border: "1px solid #eee",
-                      borderRadius: 12,
-                      padding: 10,
-                    }}>
-                    <div style={{ color: "#666", fontSize: 12 }}>
-                      En progreso
-                    </div>
-                    <div style={{ fontWeight: 800, fontSize: 18 }}>
-                      {report?.totals.inProgress ?? "—"}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      border: "1px solid #eee",
-                      borderRadius: 12,
-                      padding: 10,
-                    }}>
-                    <div style={{ color: "#666", fontSize: 12 }}>
-                      Finalizados
-                    </div>
-                    <div style={{ fontWeight: 800, fontSize: 18 }}>
-                      {report?.totals.finished ?? "—"}
-                    </div>
-                  </div>
-                  <div
-                    style={{
-                      border: "1px solid #eee",
-                      borderRadius: 12,
-                      padding: 10,
-                    }}>
-                    <div style={{ color: "#666", fontSize: 12 }}>
-                      % finalización
-                    </div>
-                    <div style={{ fontWeight: 800, fontSize: 18 }}>
-                      {report ? `${report.totals.completionRate}%` : "—"}
-                    </div>
-                  </div>
+                  ))}
                 </div>
 
                 {/* Top áreas */}
-                <div style={{ display: "grid", gap: 8 }}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "baseline",
-                    }}>
+                <div className="grid gap-2">
+                  <div className="flex items-baseline justify-between gap-3">
                     <b>Top áreas (Top #1)</b>
-                    <p style={{ margin: 0, color: "#666", fontSize: 12 }}>
+                    <p className="m-0 text-xs text-muted">
                       Base: {report?.totals.finished ?? 0} finalizados
                     </p>
-                    <span style={{ color: "#666", fontSize: 12 }}>Top 5</span>
+                    <span className="text-xs text-muted">Top 5</span>
                   </div>
 
                   {report?.topAreas?.top5?.length ? (
-                    <div style={{ display: "grid", gap: 8 }}>
+                    <div className="grid gap-2">
                       {(() => {
                         const max = Math.max(
                           ...report.topAreas.top5.map((x) => x.count),
@@ -420,35 +325,17 @@ export default function AdminDashboard() {
                         return report.topAreas.top5.map((x) => {
                           const pct = Math.round((x.count / max) * 100);
                           return (
-                            <div
-                              key={x.area}
-                              style={{ display: "grid", gap: 6 }}>
-                              <div
-                                style={{
-                                  display: "flex",
-                                  justifyContent: "space-between",
-                                  gap: 12,
-                                }}>
-                                <span style={{ fontWeight: 600 }}>
-                                  {x.area}
-                                </span>
-                                <span style={{ color: "#444" }}>
+                            <div key={x.area} className="grid gap-1.5">
+                              <div className="flex justify-between gap-3">
+                                <span className="font-semibold">{x.area}</span>
+                                <span className="text-[#444]">
                                   <b>{x.count}</b>
                                 </span>
                               </div>
-                              <div
-                                style={{
-                                  height: 10,
-                                  background: "#eee",
-                                  borderRadius: 999,
-                                  overflow: "hidden",
-                                }}>
+                              <div className="h-2.5 overflow-hidden rounded-full bg-border">
                                 <div
-                                  style={{
-                                    height: "100%",
-                                    width: `${pct}%`,
-                                    background: "#111",
-                                  }}
+                                  className="h-full bg-primary"
+                                  style={{ width: `${pct}%` }}
                                 />
                               </div>
                             </div>
@@ -457,111 +344,57 @@ export default function AdminDashboard() {
                       })()}
                     </div>
                   ) : (
-                    <p style={{ margin: 0, color: "#666" }}>
+                    <p className="m-0 text-muted">
                       Aún no hay finalizados con resultados.
                     </p>
                   )}
                 </div>
 
                 {/* Por curso */}
-                <div style={{ display: "grid", gap: 8 }}>
+                <div className="grid gap-2">
                   <b>Por curso</b>
+
                   {report?.byCourse &&
                   Object.keys(report.byCourse).length > 0 ? (
-                    <div
-                      style={{
-                        overflowX: "auto",
-                        border: "1px solid #eee",
-                        borderRadius: 12,
-                      }}>
-                      <table
-                        style={{ width: "100%", borderCollapse: "collapse" }}>
-                        <thead style={{ background: "#fafafa" }}>
+                    <div className="overflow-x-auto rounded-xl border border-border">
+                      <table className="w-full border-collapse text-sm">
+                        <thead className="bg-surface">
                           <tr>
-                            <th
-                              style={{
-                                textAlign: "left",
-                                padding: 10,
-                                borderBottom: "1px solid #eee",
-                              }}>
+                            <th className="border-b border-border p-2.5 text-left font-semibold">
                               Curso
                             </th>
-                            <th
-                              style={{
-                                textAlign: "right",
-                                padding: 10,
-                                borderBottom: "1px solid #eee",
-                              }}>
-                              Inscritos
-                            </th>
-                            <th
-                              style={{
-                                textAlign: "right",
-                                padding: 10,
-                                borderBottom: "1px solid #eee",
-                              }}>
-                              No iniciado
-                            </th>
-                            <th
-                              style={{
-                                textAlign: "right",
-                                padding: 10,
-                                borderBottom: "1px solid #eee",
-                              }}>
-                              En progreso
-                            </th>
-                            <th
-                              style={{
-                                textAlign: "right",
-                                padding: 10,
-                                borderBottom: "1px solid #eee",
-                              }}>
-                              Finalizados
-                            </th>
+                            {[
+                              "Inscritos",
+                              "No iniciado",
+                              "En progreso",
+                              "Finalizados",
+                            ].map((h) => (
+                              <th
+                                key={h}
+                                className="border-b border-border p-2.5 text-right font-semibold">
+                                {h}
+                              </th>
+                            ))}
                           </tr>
                         </thead>
                         <tbody>
                           {Object.entries(report.byCourse)
                             .sort(([a], [b]) => a.localeCompare(b))
                             .map(([course, v]) => (
-                              <tr key={course}>
-                                <td
-                                  style={{
-                                    padding: 10,
-                                    borderBottom: "1px solid #f2f2f2",
-                                  }}>
+                              <tr key={course} className="hover:bg-surface">
+                                <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5">
                                   {course}
                                 </td>
-                                <td
-                                  style={{
-                                    padding: 10,
-                                    textAlign: "right",
-                                    borderBottom: "1px solid #f2f2f2",
-                                  }}>
+                                <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5 text-right">
                                   {v.enrolled}
                                 </td>
-                                <td
-                                  style={{
-                                    padding: 10,
-                                    textAlign: "right",
-                                    borderBottom: "1px solid #f2f2f2",
-                                  }}>
+                                <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5 text-right">
                                   {v.notStarted}
                                 </td>
-                                <td
-                                  style={{
-                                    padding: 10,
-                                    textAlign: "right",
-                                    borderBottom: "1px solid #f2f2f2",
-                                  }}>
+                                <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5 text-right">
                                   {v.inProgress}
                                 </td>
-                                <td
-                                  style={{
-                                    padding: 10,
-                                    textAlign: "right",
-                                    borderBottom: "1px solid #f2f2f2",
-                                  }}>
+                                <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5 text-right">
                                   {v.finished}
                                 </td>
                               </tr>
@@ -570,9 +403,7 @@ export default function AdminDashboard() {
                       </table>
                     </div>
                   ) : (
-                    <p style={{ margin: 0, color: "#666" }}>
-                      Sin información por curso.
-                    </p>
+                    <p className="m-0 text-muted">Sin información por curso.</p>
                   )}
                 </div>
               </div>
@@ -580,83 +411,80 @@ export default function AdminDashboard() {
           </div>
         </section>
 
-        <div
-          style={{
-            border: "1px solid #eee",
-            borderRadius: 14,
-            overflow: "hidden",
-          }}>
-          <div
-            style={{
-              padding: "10px 12px",
-              borderBottom: "1px solid #eee",
-              display: "flex",
-              justifyContent: "space-between",
-            }}>
+        {/* Estudiantes */}
+        <div className="overflow-hidden rounded-[14px] border border-border bg-white">
+          <div className="flex items-center justify-between gap-3 border-b border-border px-3 py-2.5">
             <b>Estudiantes</b>
-            <span style={{ color: "#666" }}>
+
+            <span className="text-sm text-muted">
               {loadingRows ? "Cargando..." : `${filteredRows.length} registros`}
             </span>
-            <button
-              disabled={!selectedPeriodId}
-              onClick={async () => {
-                if (!selectedPeriodId) return;
-                const filename = `period_${selectedPeriodId}_export.csv`;
-                try {
-                  await downloadFile(
-                    `${
-                      import.meta.env.PUBLIC_API_BASE
-                    }/admin/periods/${selectedPeriodId}/export.csv`,
-                    `period_${selectedPeriodId}_export.csv`
-                  );
-                  setImportMsg(null);
-                } catch (e: any) {
-                  setImportMsg(`Error: ${e.message}`);
-                }
-              }}>
-              Exportar CSV
-            </button>
-            <button
-              disabled={!selectedPeriodId}
-              onClick={async () => {
-                if (!selectedPeriodId) return;
-                const filename = `period_${selectedPeriodId}_report.pdf`;
-                try {
-                  await downloadFile(
-                    `${
-                      import.meta.env.PUBLIC_API_BASE
-                    }/admin/periods/${selectedPeriodId}/report.pdf`,
-                    `period_${selectedPeriodId}_report.pdf`
-                  );
-                  setImportMsg(null);
-                } catch (e: any) {
-                  setImportMsg(`Error: ${e.message}`);
-                }
-              }}>
-              Descargar PDF
-            </button>
+
+            <div className="flex items-center gap-2">
+              <button
+                disabled={!selectedPeriodId}
+                onClick={async () => {
+                  if (!selectedPeriodId) return;
+                  const filename = `period_${selectedPeriodId}_export.csv`;
+                  try {
+                    await downloadFile(
+                      `${
+                        import.meta.env.PUBLIC_API_BASE
+                      }/admin/periods/${selectedPeriodId}/export.csv`,
+                      filename
+                    );
+                    setImportMsg(null);
+                  } catch (e: any) {
+                    setImportMsg(`Error: ${e.message}`);
+                  }
+                }}
+                className="btn btn-secondary">
+                Exportar CSV
+              </button>
+
+              <button
+                disabled={!selectedPeriodId}
+                onClick={async () => {
+                  if (!selectedPeriodId) return;
+                  const filename = `period_${selectedPeriodId}_report.pdf`;
+                  try {
+                    await downloadFile(
+                      `${
+                        import.meta.env.PUBLIC_API_BASE
+                      }/admin/periods/${selectedPeriodId}/report.pdf`,
+                      filename
+                    );
+                    setImportMsg(null);
+                  } catch (e: any) {
+                    setImportMsg(`Error: ${e.message}`);
+                  }
+                }}
+                className="btn btn-secondary">
+                Descargar PDF
+              </button>
+            </div>
           </div>
-          <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse" }}>
+
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-sm">
               <thead>
-                <tr style={{ textAlign: "left", background: "#fafafa" }}>
-                  <th style={{ padding: 10, borderBottom: "1px solid #eee" }}>
-                    Estudiante
-                  </th>
-                  <th style={{ padding: 10, borderBottom: "1px solid #eee" }}>
-                    Estado
-                  </th>
-                  <th style={{ padding: 10, borderBottom: "1px solid #eee" }}>
-                    Progreso
-                  </th>
-                  <th style={{ padding: 10, borderBottom: "1px solid #eee" }}>
-                    Top áreas
-                  </th>
-                  <th style={{ padding: 10, borderBottom: "1px solid #eee" }}>
-                    Intento
-                  </th>
+                <tr className="bg-surface text-left">
+                  {[
+                    "Estudiante",
+                    "Estado",
+                    "Progreso",
+                    "Top áreas",
+                    "Intento",
+                  ].map((h) => (
+                    <th
+                      key={h}
+                      className="border-b border-border p-2.5 font-semibold">
+                      {h}
+                    </th>
+                  ))}
                 </tr>
               </thead>
+
               <tbody>
                 {filteredRows.map((r) => {
                   const kind =
@@ -680,47 +508,31 @@ export default function AdminDashboard() {
                     <tr
                       key={r.enrollment.id}
                       onClick={() => openDetail(r)}
-                      style={{ cursor: "pointer" }}>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #f2f2f2",
-                        }}>
-                        <div style={{ fontWeight: 600 }}>
+                      className="cursor-pointer hover:bg-surface">
+                      <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5">
+                        <div className="font-semibold">
                           {r.student.name || "Sin nombre"}
                         </div>
-                        <div style={{ color: "#666", fontSize: 12 }}>
+                        <div className="text-xs text-muted">
                           {r.student.email || ""}
                         </div>
                       </td>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #f2f2f2",
-                        }}>
-                        <span style={badgeStyle(kind as any)}>
+
+                      <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5">
+                        <span className={badgeClass(kind)}>
                           {r.progressStatus}
                         </span>
                       </td>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #f2f2f2",
-                        }}>
+
+                      <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5">
                         {progress}
                       </td>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #f2f2f2",
-                        }}>
+
+                      <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5">
                         {topAreas}
                       </td>
-                      <td
-                        style={{
-                          padding: 10,
-                          borderBottom: "1px solid #f2f2f2",
-                        }}>
+
+                      <td className="border-b border-[rgba(0,0,0,0.06)] p-2.5">
                         {attemptInfo}
                       </td>
                     </tr>
@@ -729,7 +541,7 @@ export default function AdminDashboard() {
 
                 {!loadingRows && filteredRows.length === 0 && (
                   <tr>
-                    <td colSpan={5} style={{ padding: 14, color: "#666" }}>
+                    <td colSpan={5} className="p-3.5 text-muted">
                       No hay estudiantes para mostrar.
                     </td>
                   </tr>
@@ -739,6 +551,7 @@ export default function AdminDashboard() {
           </div>
         </div>
       </section>
+
       <StudentDetailModal
         open={modalOpen}
         onClose={() => setModalOpen(false)}
