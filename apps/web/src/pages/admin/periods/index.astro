@@ -1,0 +1,23 @@
+---
+import AdminPeriodsList from "../../../components/admin/AdminPeriodsList";
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+---
+
+<AdminLayout title="Periodos">
+  <div class="space-y-4">
+    <div class="flex items-start justify-between gap-3">
+      <div>
+        <h1 class="text-2xl font-extrabold tracking-tight">Periodos</h1>
+        <p class="mt-1 text-sm text-muted">
+          Crea periodos, carga estudiantes y revisa reportes.
+        </p>
+      </div>
+
+      <a href="/admin/periods/new">
+        <button class="btn btn-primary">Crear periodo</button>
+      </a>
+    </div>
+
+    <AdminPeriodsList client:load />
+  </div>
+</AdminLayout>

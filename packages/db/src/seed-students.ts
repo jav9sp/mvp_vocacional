@@ -24,12 +24,15 @@ async function main() {
 
   const passwordHash = await bcrypt.hash(DEFAULT_PASSWORD, 10);
 
+  let baseRut = "12345678";
+
   for (let i = 1; i <= STUDENT_COUNT; i++) {
     const email = `student${i}@demo.cl`;
 
     const [student, created] = await User.findOrCreate({
       where: { email },
       defaults: {
+        rut: `${baseRut + i}-0`,
         role: "student",
         name: `Estudiante ${i}`,
         email,

@@ -19,6 +19,7 @@ async function main() {
   await sequelize.authenticate();
   await sequelize.sync();
 
+  const rut = "12345678-9";
   const email = "admin@demo.cl";
   const password = "Admin1234!";
   const passwordHash = await bcrypt.hash(password, 10);
@@ -26,6 +27,7 @@ async function main() {
   const [admin, created] = await User.findOrCreate({
     where: { email },
     defaults: {
+      rut,
       role: "admin",
       name: "Admin",
       email,

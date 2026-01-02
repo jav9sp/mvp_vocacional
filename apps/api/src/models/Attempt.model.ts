@@ -12,6 +12,7 @@ import {
 } from "sequelize-typescript";
 import User from "./User.model.js";
 import Test from "./Test.model.js";
+import Period from "./Period.model.js";
 
 export type AttemptStatus = "in_progress" | "finished";
 
@@ -46,6 +47,12 @@ class Attempt extends Model {
 
   @Column(DataType.DATE)
   declare finishedAt: Date | null;
+
+  @Index("idx_attempts_period")
+  @ForeignKey(() => Period)
+  @AllowNull(false)
+  @Column(DataType.INTEGER.UNSIGNED)
+  declare periodId: number;
 }
 
 export default Attempt;

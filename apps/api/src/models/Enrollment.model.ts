@@ -19,13 +19,13 @@ export type EnrollmentStatus = "invited" | "active" | "completed" | "removed";
   tableName: "enrollments",
   timestamps: true,
   indexes: [
+    { name: "idx_enrollments_period", fields: ["periodId"] },
+    { name: "idx_enrollments_student", fields: ["studentUserId"] },
     {
       name: "uniq_period_student",
       unique: true,
       fields: ["periodId", "studentUserId"],
     },
-    { name: "idx_enrollments_period", fields: ["periodId"] },
-    { name: "idx_enrollments_student", fields: ["studentUserId"] },
   ],
 })
 class Enrollment extends Model {
@@ -36,13 +36,11 @@ class Enrollment extends Model {
 
   @ForeignKey(() => Period)
   @AllowNull(false)
-  @Index("idx_enrollments_period")
   @Column(DataType.INTEGER.UNSIGNED)
   declare periodId: number;
 
   @ForeignKey(() => User)
   @AllowNull(false)
-  @Index("idx_enrollments_student")
   @Column(DataType.INTEGER.UNSIGNED)
   declare studentUserId: number;
 

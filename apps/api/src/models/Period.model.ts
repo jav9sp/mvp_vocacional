@@ -47,6 +47,7 @@ class Period extends Model {
 
   @Default("draft")
   @AllowNull(false)
+  @Index("idx_periods_status")
   @Column(DataType.ENUM("draft", "active", "closed"))
   declare status: PeriodStatus;
 

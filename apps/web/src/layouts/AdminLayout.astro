@@ -1,0 +1,79 @@
+---
+import "../styles/global.css";
+import AdminTopbar from "../components/admin/AdminTopbar";
+const path = Astro.url.pathname;
+
+const nav = [
+  { href: "/admin", label: "Dashboard" },
+  { href: "/admin/periods", label: "Periodos" },
+  // futuro:
+  // { href: "/admin/students", label: "Estudiantes" },
+  // { href: "/admin/settings", label: "Configuración" },
+];
+
+interface Props {
+  title: string;
+}
+
+const { title } = Astro.props;
+---
+
+<!doctype html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
+    <title>{`Admin - ${title}`}</title>
+  </head>
+
+  <body class="min-h-screen bg-surface text-fg">
+    <div class="flex min-h-screen">
+      <!-- Sidebar -->
+      <aside class="w-65 border-r border-border bg-white">
+        <div class="px-4 py-4">
+          <a href="/admin" class="text-lg font-extrabold tracking-tight"
+            >Vocacional</a
+          >
+          <div class="mt-1 text-xs text-muted">Panel de administración</div>
+        </div>
+
+        <nav class="px-2 pb-4">
+          <div
+            class="mb-2 px-2 text-xs font-semibold uppercase tracking-wide text-muted">
+            Menú
+          </div>
+
+          <div class="space-y-1">
+            {
+              nav.map((it) => {
+                const active =
+                  path === it.href || path.startsWith(it.href + "/");
+                return (
+                  <a
+                    href={it.href}
+                    class={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition
+                    ${active ? "bg-primary text-white" : "text-slate-700 hover:bg-slate-50"}`}>
+                    {it.label}
+                  </a>
+                );
+              })
+            }
+          </div>
+        </nav>
+
+        <div class="mt-auto border-t border-border p-3 text-xs text-muted">
+          v0.1 MVP
+        </div>
+      </aside>
+
+      <!-- Main -->
+      <div class="flex min-w-0 flex-1 flex-col">
+        <AdminTopbar client:load />
+
+        <main class="mx-auto w-full max-w-6xl px-4 py-6">
+          <slot />
+        </main>
+      </div>
+    </div>
+  </body>
+</html>
