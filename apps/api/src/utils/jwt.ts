@@ -4,6 +4,7 @@ import jwt from "jsonwebtoken";
 export type JwtUserPayload = {
   sub: number; // userId
   role: "admin" | "student";
+  organizationId: number;
 };
 
 function required(name: string, value: string | undefined): string {

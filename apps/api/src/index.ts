@@ -35,7 +35,7 @@ async function bootstrap() {
 
   const isDev = process.env.NODE_ENV !== "production";
   if (isDev) {
-    await sequelize.sync({ alter: true });
+    await sequelize.sync();
   }
 
   const port = Number(process.env.API_PORT || 4000);

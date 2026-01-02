@@ -31,7 +31,11 @@ export function requireAuth(req: any, res: any, next: any) {
 
   try {
     const payload = verifyAccessToken(token);
-    req.auth = { userId: payload.sub, role: payload.role };
+    req.auth = {
+      userId: payload.sub,
+      role: payload.role,
+      organizationId: payload.organizationId,
+    };
     return next();
   } catch {
     return res

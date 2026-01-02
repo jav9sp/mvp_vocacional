@@ -8,6 +8,10 @@ import { uploadXlsx } from "../middlewares/upload.middleware.ts";
 import { adminImportEnrollmentsXlsx } from "../controllers/admin.import.controller.ts";
 import { adminGetPeriodReport } from "../controllers/admin.report.controller.ts";
 import { adminGetPeriodReportPdf } from "../controllers/admin.report.pdf.controller.ts";
+import {
+  getPeriodStudents,
+  getPeriodSummary,
+} from "../controllers/admin.periods.detail.controller.ts";
 
 const router = Router();
 
@@ -48,6 +52,18 @@ router.get(
   requireAuth,
   requireRole("admin"),
   adminGetPeriodReportPdf
+);
+router.get(
+  "/periods/:periodId/summary",
+  requireAuth,
+  requireRole("admin"),
+  getPeriodSummary
+);
+router.get(
+  "/periods/:periodId/students",
+  requireAuth,
+  requireRole("admin"),
+  getPeriodStudents
 );
 
 export default router;

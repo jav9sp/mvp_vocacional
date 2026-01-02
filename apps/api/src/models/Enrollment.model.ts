@@ -8,7 +8,7 @@ import {
   AllowNull,
   Default,
   ForeignKey,
-  Index,
+  BelongsTo,
 } from "sequelize-typescript";
 import Period from "./Period.model.js";
 import User from "./User.model.js";
@@ -51,6 +51,12 @@ class Enrollment extends Model {
 
   @Column(DataType.JSON)
   declare meta: Record<string, any> | null;
+
+  @BelongsTo(() => Period, { foreignKey: "periodId", as: "period" })
+  declare period?: Period;
+
+  @BelongsTo(() => User, { foreignKey: "studentUserId", as: "student" })
+  declare student?: User;
 }
 
 export default Enrollment;

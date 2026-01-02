@@ -27,20 +27,31 @@ CREATE TABLE IF NOT EXISTS organizations (
 -- -------------------------
 CREATE TABLE IF NOT EXISTS users (
   id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+  organization_id INT UNSIGNED NOT NULL DEFAULT 1,
+
   rut VARCHAR(20) NOT NULL,
   role ENUM('admin','student') NOT NULL,
   name VARCHAR(120) NOT NULL,
   email VARCHAR(180) NOT NULL,
   passwordHash VARCHAR(255) NOT NULL,
   mustChangePassword TINYINT(1) NOT NULL DEFAULT 0,
+
   createdAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   updatedAt DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+
   PRIMARY KEY (id),
 
   UNIQUE KEY uniq_users_email (email),
   UNIQUE KEY uniq_users_rut (rut),
 
-  KEY idx_users_role (role)
+  KEY idx_users_role (role),
+  KEY idx_users_organization_id (organization_id),
+
+  CONSTRAINT fk_users_organization
+    FOREIGN KEY (organization_id)
+    REFERENCES organizations (id)
+    ON UPDATE CASCADE
+    ON DELETE RESTRICT
 ) ENGINE=InnoDB;
 
 -- -------------------------

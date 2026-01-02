@@ -1,4 +1,3 @@
-// apps/api/src/auth/auth.controller.ts
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import User from "../models/User.model.js";
@@ -33,13 +32,18 @@ export async function login(req: any, res: any) {
     return res.status(401).json({ ok: false, error: "Invalid credentials" });
   }
 
-  const token = signAccessToken({ sub: user.id, role: user.role });
+  const token = signAccessToken({
+    sub: user.id,
+    role: user.role,
+    organizationId: user.organizationId,
+  });
 
   return res.json({
     ok: true,
     token,
     user: {
       id: user.id,
+      organizationId: user.organizationId,
       role: user.role,
       name: user.name,
       email: user.email,

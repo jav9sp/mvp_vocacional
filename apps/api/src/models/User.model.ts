@@ -4,12 +4,17 @@ import {
   Model,
   DataType,
   PrimaryKey,
+  ForeignKey,
   AutoIncrement,
   Unique,
   Default,
   AllowNull,
   Index,
+  HasMany,
+  BelongsTo,
 } from "sequelize-typescript";
+import Enrollment from "./Enrollment.model.ts";
+import Organization from "./Organization.model.ts";
 
 export type UserRole = "admin" | "student";
 
@@ -19,6 +24,11 @@ class User extends Model {
   @AutoIncrement
   @Column(DataType.INTEGER.UNSIGNED)
   declare id: number;
+
+  @ForeignKey(() => Organization)
+  @AllowNull(false)
+  @Column(DataType.INTEGER.UNSIGNED)
+  declare organizationId: number;
 
   @Unique
   @AllowNull(false)
@@ -48,6 +58,15 @@ class User extends Model {
   @AllowNull(false)
   @Column(DataType.BOOLEAN)
   declare mustChangePassword: boolean;
+
+  @BelongsTo(() => Organization, {
+    foreignKey: "organizationId",
+    as: "organization",
+  })
+  declare organization?: Organization;
+
+  @HasMany(() => Enrollment, { foreignKey: "studentUserId", as: "enrollments" })
+  declare enrollments?: Enrollment[];
 }
 
 export default User;
