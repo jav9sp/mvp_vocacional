@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import Question from "../models/Question.model.ts";
 import {
   getActiveTest,
@@ -5,7 +6,7 @@ import {
 } from "../services/attempt.service.ts";
 import { INAPV_AREAS } from "../data/inapv-areas.js"; // te indico abajo cómo hacerlo
 
-export async function getCurrentTest(req: any, res: any) {
+export async function getCurrentTest(req: Request, res: Response) {
   const userId = req.auth!.userId;
 
   const test = await getActiveTest();

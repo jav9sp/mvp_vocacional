@@ -1,8 +1,9 @@
+import { Request, Response } from "express";
 import Attempt from "../models/Attempt.model.js";
 import Result from "../models/Result.model.js";
 import Test from "../models/Test.model.js";
 
-export async function getMyLatestResult(req: any, res: any) {
+export async function getMyLatestResult(req: Request, res: Response) {
   const userId = req.auth!.userId;
 
   const activeTest = await Test.findOne({ where: { isActive: true } });

@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import { z } from "zod";
 import * as XLSX from "xlsx";
 import Period from "../models/Period.model.js";
@@ -26,7 +27,7 @@ function pick(row: Record<string, any>, keys: string[]) {
   return "";
 }
 
-export async function adminImportEnrollmentsXlsx(req: any, res: any) {
+export async function adminImportEnrollmentsXlsx(req: Request, res: Response) {
   const parsed = ParamsSchema.safeParse(req.params);
   if (!parsed.success)
     return res.status(400).json({ ok: false, error: "Invalid periodId" });

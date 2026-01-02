@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import { Op, fn, col, literal } from "sequelize";
 import Period from "../models/Period.model.js";
 import Test from "../models/Test.model.js";
@@ -5,10 +6,13 @@ import Organization from "../models/Organization.model.js";
 import Attempt from "../models/Attempt.model.ts";
 import Enrollment from "../models/Enrollment.model.ts";
 
-export async function adminListPeriods(req: any, res: any) {
-  // MVP: si tu User aún no tiene organizationId, tomamos la primera org.
-  // Luego lo cambias a: const orgId = req.user.organizationId;
-  const org = await Organization.findOne({ order: [["id", "ASC"]] });
+export async function adminListPeriods(req: Request, res: Response) {
+  const orgId = req.auth?.organizationId;
+  if (!orgId) return res.status(401).json({ ok: false, error: "Unauthorized" });
+
+  const org = await Organization.findOne({
+    where: { id: orgId },
+  });
   if (!org)
     return res.status(500).json({ ok: false, error: "No organization found" });
 

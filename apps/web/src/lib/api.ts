@@ -3,19 +3,31 @@ import { getToken } from "./auth";
 const API_BASE = import.meta.env.PUBLIC_API_BASE || "http://localhost:4000";
 
 export async function api<T>(path: string, init: RequestInit = {}): Promise<T> {
-  const token = typeof window !== "undefined" ? getToken() : null;
+  const token = typeof window !== "undefined" ? getToken() : "";
 
   const res = await fetch(`${API_BASE}${path}`, {
     ...init,
     headers: {
       ...(init.headers || {}),
-      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      ...(token
+        ? {
+            Authorization: token.toLowerCase().startsWith("bearer ")
+              ? token
+              : `Bearer ${token}`,
+          }
+        : {}),
       "Content-Type": "application/json",
     },
   });
 
   const text = await res.text();
-  const data = text ? JSON.parse(text) : {};
+
+  let data: any = {};
+  try {
+    data = text ? JSON.parse(text) : {};
+  } catch {
+    data = { raw: text };
+  }
 
   if (!res.ok) {
     const msg = data?.error || `HTTP ${res.status}`;

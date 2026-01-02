@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import { z } from "zod";
 import { buildPeriodReport } from "../services/period-report.service.ts";
 
@@ -5,7 +6,7 @@ const ParamsSchema = z.object({
   periodId: z.coerce.number().int().positive(),
 });
 
-export async function adminGetPeriodReport(req: any, res: any) {
+export async function adminGetPeriodReport(req: Request, res: Response) {
   const parsed = ParamsSchema.safeParse(req.params);
   if (!parsed.success)
     return res.status(400).json({ ok: false, error: "Invalid periodId" });

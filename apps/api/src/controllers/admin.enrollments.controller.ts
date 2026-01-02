@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import { z } from "zod";
 import Enrollment from "../models/Enrollment.model.js";
 import Period from "../models/Period.model.js";
@@ -9,7 +10,7 @@ const ParamsSchema = z.object({
   periodId: z.coerce.number().int().positive(),
 });
 
-export async function adminListEnrollments(req: any, res: any) {
+export async function adminListEnrollments(req: Request, res: Response) {
   const parsed = ParamsSchema.safeParse(req.params);
   if (!parsed.success)
     return res.status(400).json({ ok: false, error: "Invalid periodId" });

@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { z } from "zod";
 import User from "../models/User.model.js";
@@ -8,7 +9,7 @@ const LoginBodySchema = z.object({
   password: z.string().min(1),
 });
 
-export async function login(req: any, res: any) {
+export async function login(req: Request, res: Response) {
   const parsed = LoginBodySchema.safeParse(req.body);
   if (!parsed.success) {
     return res.status(400).json({

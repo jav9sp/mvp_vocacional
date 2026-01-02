@@ -1,9 +1,10 @@
-// apps/api/src/middlewares/auth.middleware.ts
+import { Request, Response, NextFunction } from "express";
 import { verifyAccessToken } from "../utils/jwt.js";
 
 export type AuthContext = {
   userId: number;
   role: "admin" | "student";
+  organizationId: number;
 };
 
 declare global {
@@ -14,7 +15,7 @@ declare global {
   }
 }
 
-export function requireAuth(req: any, res: any, next: any) {
+export function requireAuth(req: Request, res: Response, next: NextFunction) {
   const header = req.headers.authorization;
   if (!header || typeof header !== "string") {
     return res
@@ -45,7 +46,7 @@ export function requireAuth(req: any, res: any, next: any) {
 }
 
 export function requireRole(role: AuthContext["role"]) {
-  return (req: any, res: any, next: any) => {
+  return (req: Request, res: Response, next: NextFunction) => {
     if (!req.auth) {
       return res.status(401).json({ ok: false, error: "Unauthorized" });
     }

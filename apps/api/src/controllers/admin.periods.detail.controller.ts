@@ -1,10 +1,11 @@
-import { Op, fn, col, literal } from "sequelize";
+import { Request, Response } from "express";
+import { Op } from "sequelize";
 import Period from "../models/Period.model.js";
 import Enrollment from "../models/Enrollment.model.js";
 import Attempt from "../models/Attempt.model.js";
 import User from "../models/User.model.ts";
 
-export async function getPeriodSummary(req: any, res: any) {
+export async function getPeriodSummary(req: Request, res: Response) {
   const periodId = Number(req.params.periodId);
   if (!Number.isFinite(periodId)) {
     return res.status(400).json({ ok: false, error: "Invalid periodId" });

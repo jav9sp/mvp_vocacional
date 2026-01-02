@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import { z } from "zod";
 import Attempt from "../models/Attempt.model.js";
 import Answer from "../models/Answer.model.js";
@@ -13,7 +14,7 @@ const AttemptIdParamsSchema = z.object({
 
 const EXPECTED_ANSWER_COUNT = 103;
 
-export async function getAttemptAnswers(req: any, res: any) {
+export async function getAttemptAnswers(req: Request, res: Response) {
   const paramsParsed = AttemptIdParamsSchema.safeParse(req.params);
   if (!paramsParsed.success) {
     return res.status(400).json({ ok: false, error: "Invalid attemptId" });
@@ -51,7 +52,7 @@ export async function getAttemptAnswers(req: any, res: any) {
   });
 }
 
-export async function saveAttemptAnswers(req: any, res: any) {
+export async function saveAttemptAnswers(req: Request, res: Response) {
   const paramsParsed = AttemptIdParamsSchema.safeParse(req.params);
   if (!paramsParsed.success) {
     return res.status(400).json({ ok: false, error: "Invalid attemptId" });
@@ -129,7 +130,7 @@ export async function saveAttemptAnswers(req: any, res: any) {
   });
 }
 
-export async function finishAttempt(req: any, res: any) {
+export async function finishAttempt(req: Request, res: Response) {
   const paramsParsed = AttemptIdParamsSchema.safeParse(req.params);
   if (!paramsParsed.success) {
     return res.status(400).json({ ok: false, error: "Invalid attemptId" });

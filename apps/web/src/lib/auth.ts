@@ -18,8 +18,8 @@ export function clearAuth() {
   localStorage.removeItem(USER_KEY);
 }
 
-export function getToken(): string | null {
-  return localStorage.getItem(TOKEN_KEY);
+export function getToken(): string {
+  return (localStorage.getItem(TOKEN_KEY) ?? "").trim();
 }
 
 export function getUser(): AuthUser | null {

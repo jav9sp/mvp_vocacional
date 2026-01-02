@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import { z } from "zod";
 import Period from "../models/Period.model.js";
 import Enrollment from "../models/Enrollment.model.js";
@@ -17,7 +18,7 @@ function csvEscape(v: any) {
   return /[",\n\r]/.test(escaped) ? `"${escaped}"` : escaped;
 }
 
-export async function adminExportPeriodCSV(req: any, res: any) {
+export async function adminExportPeriodCSV(req: Request, res: Response) {
   const parsed = ParamsSchema.safeParse(req.params);
   if (!parsed.success)
     return res.status(400).json({ ok: false, error: "Invalid periodId" });

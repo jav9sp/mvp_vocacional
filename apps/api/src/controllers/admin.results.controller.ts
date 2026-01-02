@@ -1,3 +1,4 @@
+import { Request, Response } from "express";
 import { z } from "zod";
 import Attempt from "../models/Attempt.model.js";
 import Result from "../models/Result.model.js";
@@ -6,7 +7,7 @@ const ParamsSchema = z.object({
   attemptId: z.coerce.number().int().positive(),
 });
 
-export async function adminGetAttemptResult(req: any, res: any) {
+export async function adminGetAttemptResult(req: Request, res: Response) {
   const parsed = ParamsSchema.safeParse(req.params);
   if (!parsed.success)
     return res.status(400).json({ ok: false, error: "Invalid attemptId" });

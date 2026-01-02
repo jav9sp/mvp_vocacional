@@ -1,4 +1,3 @@
-// apps/api/src/auth/auth.routes.ts
 import { Router } from "express";
 import { login } from "./auth.controller.ts";
 
