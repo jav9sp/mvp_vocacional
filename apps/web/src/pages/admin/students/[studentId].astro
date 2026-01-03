@@ -1,0 +1,9 @@
+---
+import AdminLayout from "../../../layouts/AdminLayout.astro";
+import AdminStudentDetail from "../../../components/admin/AdminStudentDetail";
+const { studentId } = Astro.params;
+---
+
+<AdminLayout title="Estudiantes">
+  <AdminStudentDetail studentId={studentId!} client:load />
+</AdminLayout>

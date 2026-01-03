@@ -12,6 +12,7 @@ import {
   getPeriodStudents,
   getPeriodSummary,
 } from "../controllers/admin.periods.detail.controller.ts";
+import { adminGetStudentDetail } from "../controllers/admin.students.controller.ts";
 
 const router = Router();
 
@@ -64,6 +65,12 @@ router.get(
   requireAuth,
   requireRole("admin"),
   getPeriodStudents
+);
+router.get(
+  "/students/:studentId",
+  requireAuth,
+  requireRole("admin"),
+  adminGetStudentDetail
 );
 
 export default router;

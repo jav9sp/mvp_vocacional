@@ -1,0 +1,10 @@
+---
+import AdminLayout from "../../../../layouts/AdminLayout.astro";
+import AdminAttemptResult from "../../../../components/admin/AdminAttemptResult";
+const { attemptId } = Astro.params;
+---
+
+<AdminLayout title="Resultados">
+  <span slot="title">Admin · Resultado intento {attemptId}</span>
+  <AdminAttemptResult attemptId={attemptId!} client:load />
+</AdminLayout>
