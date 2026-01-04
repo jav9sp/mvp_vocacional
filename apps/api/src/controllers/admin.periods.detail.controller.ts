@@ -97,9 +97,14 @@ export async function getPeriodStudents(req: any, res: any) {
     ];
   }
 
+  const courseFilter = (req.query.course as string | undefined)?.trim();
+
   // Enrollments paginados
   const { rows: enrollments, count: total } = await Enrollment.findAndCountAll({
-    where: { periodId },
+    where: {
+      periodId,
+      ...(courseFilter ? { meta: { course: courseFilter } } : {}),
+    },
     include: [
       {
         model: User,
@@ -170,6 +175,18 @@ export async function getPeriodStudents(req: any, res: any) {
       ? rows.filter((r: any) => r.status === statusFilter)
       : rows;
 
+  // extraer cursos únicos desde enrollments
+  const coursesSet = new Set<string>();
+
+  for (const e of enrollments as any[]) {
+    const meta = e.meta as any;
+    if (meta?.course) {
+      coursesSet.add(meta.course);
+    }
+  }
+
+  const courses = Array.from(coursesSet).sort();
+
   return res.json({
     ok: true,
     period: {
@@ -181,6 +198,7 @@ export async function getPeriodStudents(req: any, res: any) {
     page,
     pageSize,
     total,
+    courses,
     rows: filteredRows,
   });
 }

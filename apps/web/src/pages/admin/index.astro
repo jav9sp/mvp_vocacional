@@ -1,39 +1,8 @@
 ---
 import AdminLayout from "../../layouts/AdminLayout.astro";
+import AdminDashboard from "../../components/admin/AdminDashboard";
 ---
 
 <AdminLayout title="Dashboard">
-  <div class="space-y-4">
-    <h1 class="text-2xl font-extrabold tracking-tight">Dashboard</h1>
-
-    <section class="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-      <div class="card">
-        <div class="text-xs text-muted">Estudiantes</div>
-        <div class="mt-1 text-2xl font-extrabold">—</div>
-      </div>
-      <div class="card">
-        <div class="text-xs text-muted">Periodos</div>
-        <div class="mt-1 text-2xl font-extrabold">—</div>
-      </div>
-      <div class="card">
-        <div class="text-xs text-muted">% Finalización</div>
-        <div class="mt-1 text-2xl font-extrabold">—</div>
-      </div>
-      <div class="card">
-        <div class="text-xs text-muted">Última actividad</div>
-        <div class="mt-1 text-2xl font-extrabold">—</div>
-      </div>
-    </section>
-
-    <section class="card">
-      <div class="flex items-center justify-between">
-        <h2 class="text-lg font-bold">Resumen</h2>
-        <span class="text-xs text-muted">Próximamente</span>
-      </div>
-      <p class="mt-2 text-sm text-muted">
-        Aquí mostraremos gráficos y datos útiles de la institución (uso por
-        periodos, completitud, áreas destacadas).
-      </p>
-    </section>
-  </div>
+  <AdminDashboard client:load />
 </AdminLayout>

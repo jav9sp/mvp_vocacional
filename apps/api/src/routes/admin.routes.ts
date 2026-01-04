@@ -1,6 +1,10 @@
 import { Router } from "express";
 import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
-import { adminListPeriods } from "../controllers/admin.periods.controller.js";
+import {
+  adminCreatePeriod,
+  adminListPeriods,
+  adminUpdatePeriod,
+} from "../controllers/admin.periods.controller.js";
 import { adminListEnrollments } from "../controllers/admin.enrollments.controller.js";
 import { adminGetAttemptResult } from "../controllers/admin.results.controller.ts";
 import { adminExportPeriodCSV } from "../controllers/admin.export.controller.ts";
@@ -13,10 +17,24 @@ import {
   getPeriodSummary,
 } from "../controllers/admin.periods.detail.controller.ts";
 import { adminGetStudentDetail } from "../controllers/admin.students.controller.ts";
+import { adminGetDashboard } from "../controllers/admin.dashboard.controller.ts";
+import { adminListTests } from "../controllers/admin.tests.controller.ts";
 
 const router = Router();
 
+router.get("/dashboard", requireAuth, requireRole("admin"), adminGetDashboard);
+
 router.get("/periods", requireAuth, requireRole("admin"), adminListPeriods);
+router.post("/periods", requireAuth, requireRole("admin"), adminCreatePeriod);
+router.patch(
+  "/periods/:periodId",
+  requireAuth,
+  requireRole("admin"),
+  adminUpdatePeriod
+);
+
+router.get("/tests", requireAuth, requireRole("admin"), adminListTests);
+
 router.get(
   "/periods/:periodId/enrollments",
   requireAuth,

@@ -2,14 +2,16 @@
 import "../styles/global.css";
 import AdminTopbar from "../components/admin/AdminTopbar";
 const path = Astro.url.pathname;
+import { getActiveHref } from "../utils/utils";
 
 const nav = [
   { href: "/admin", label: "Dashboard" },
   { href: "/admin/periods", label: "Periodos" },
-  // futuro:
-  // { href: "/admin/students", label: "Estudiantes" },
+  { href: "/admin/students", label: "Estudiantes" },
   // { href: "/admin/settings", label: "Configuración" },
 ];
+
+const activeHref = getActiveHref(path, nav);
 
 interface Props {
   title: string;
@@ -29,7 +31,8 @@ const { title } = Astro.props;
   <body class="min-h-screen bg-surface text-fg">
     <div class="flex min-h-screen">
       <!-- Sidebar -->
-      <aside class="w-65 border-r border-border bg-white">
+      <aside
+        class="w-65 border-r border-border bg-white sticky top-0 left-0 h-screen">
         <div class="px-4 py-4">
           <a href="/admin" class="text-lg font-extrabold tracking-tight"
             >Vocacional</a
@@ -46,13 +49,13 @@ const { title } = Astro.props;
           <div class="space-y-1">
             {
               nav.map((it) => {
-                const active =
-                  path === it.href || path.startsWith(it.href + "/");
+                const active = it.href === activeHref;
+
                 return (
                   <a
                     href={it.href}
                     class={`flex items-center gap-2 rounded-xl px-3 py-2 text-sm transition
-                    ${active ? "bg-primary text-white" : "text-slate-700 hover:bg-slate-50"}`}>
+        ${active ? "bg-primary text-white" : "text-slate-700 hover:bg-slate-50"}`}>
                     {it.label}
                   </a>
                 );
@@ -61,7 +64,7 @@ const { title } = Astro.props;
           </div>
         </nav>
 
-        <div class="mt-auto border-t border-border p-3 text-xs text-muted">
+        <div class="border-t border-border p-3 text-xs text-muted">
           v0.1 MVP
         </div>
       </aside>
