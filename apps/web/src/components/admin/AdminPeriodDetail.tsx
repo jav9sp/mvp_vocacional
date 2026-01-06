@@ -9,7 +9,7 @@ import StudentsFilters from "./period-detail/StudentsFilters";
 import StudentsTable from "./period-detail/StudentsTable";
 import StudentsPagination from "./period-detail/StudentsPagination";
 
-import { api } from "../../lib/api";
+import { api, apiDownload } from "../../lib/api";
 import { apiZ } from "../../lib/apiZ";
 import { requireAuth } from "../../lib/guards";
 
@@ -21,14 +21,16 @@ import {
 } from "../../lib/adminPeriod";
 
 import {
-  downloadWithAuth,
   formatDate,
   progressPct,
   safeFileName,
   statusLabel,
   statusPillClass,
   TOTAL_QUESTIONS,
+  toUiError,
+  type UiError,
 } from "../../utils/utils";
+import StateCard from "../common/StateCard";
 
 function badgeStatus(status: string) {
   const s = (status || "").toLowerCase();
@@ -41,9 +43,11 @@ function badgeStatus(status: string) {
 }
 
 export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
+  const [uiErr, setUiErr] = useState<UiError | null>(null);
+  const [loading, setLoading] = useState(true);
+
   const pid = Number(periodId);
 
-  const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
 
   const [summary, setSummary] = useState<SummaryResp | null>(null);
@@ -76,21 +80,29 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
   useEffect(() => {
     const ok = requireAuth("admin");
     if (!ok) return;
-    if (!Number.isFinite(pid)) {
-      setErr("ID de periodo inválido");
+
+    if (!Number.isFinite(pid) || pid <= 0) {
+      setUiErr({
+        kind: "invalid_id",
+        title: "URL inválida",
+        message: "El ID del periodo no es válido.",
+      });
       setLoading(false);
       return;
     }
 
     (async () => {
       try {
-        const s = await apiZ(
-          SummaryRespSchema,
-          `/admin/periods/${pid}/summary`
-        );
-        setSummary(s);
+        await api(`/admin/periods/${pid}/summary`);
       } catch (e: any) {
-        setErr(e.message);
+        const mapped = toUiError(e);
+        setUiErr(mapped);
+
+        if (mapped.kind === "unauthorized") {
+          window.location.href = "/login";
+        }
+      } finally {
+        setLoading(false);
       }
     })();
   }, [pid]);
@@ -106,8 +118,8 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
     if (course) params.set("course", course);
 
     const r = await apiZ(
-      StudentsRespSchema,
-      `/admin/periods/${pid}/students?${params.toString()}`
+      `/admin/periods/${pid}/students?${params.toString()}`,
+      StudentsRespSchema
     );
 
     setRows(r.rows || []);
@@ -128,7 +140,7 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
       try {
         await loadStudents({ resetPage: true });
       } catch (e: any) {
-        setErr(e.message);
+        handleApiError(e);
       } finally {
         setLoading(false);
       }
@@ -140,7 +152,9 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
     setLoading(true);
     setErr(null);
     loadStudents({ resetPage: true })
-      .catch((e: any) => setErr(e.message))
+      .catch((e: any) => {
+        handleApiError(e);
+      })
       .finally(() => setLoading(false));
   }
 
@@ -159,14 +173,14 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
         if (status) params.set("status", status);
 
         const r = await apiZ(
-          StudentsRespSchema,
-          `/admin/periods/${pid}/students?${params.toString()}`
+          `/admin/periods/${pid}/students?${params.toString()}`,
+          StudentsRespSchema
         );
         setRows(r.rows || []);
         setTotal(r.total || 0);
         setPage(r.page || clamped);
       } catch (e: any) {
-        setErr(e.message);
+        handleApiError(e);
       } finally {
         setLoading(false);
       }
@@ -182,7 +196,7 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
         body: JSON.stringify({ status: next }),
       });
 
-      apiZ(SummaryRespSchema, `/admin/periods/${pid}/summary`)
+      apiZ(`/admin/periods/${pid}/summary`, SummaryRespSchema)
         .then(setSummary)
         .catch(() => {});
     } catch (e: any) {
@@ -190,6 +204,12 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
     } finally {
       setMutating(null);
     }
+  }
+
+  function handleApiError(e: any) {
+    const mapped = toUiError(e);
+    setUiErr(mapped);
+    if (mapped.kind === "unauthorized") window.location.href = "/login";
   }
 
   if (err) {
@@ -204,6 +224,25 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
           <p className="text-sm text-red-600">Error: {err}</p>
         </div>
       </div>
+    );
+  }
+
+  if (loading) {
+    return (
+      <div className="card">
+        <p className="text-sm text-muted">Cargando…</p>
+      </div>
+    );
+  }
+
+  if (uiErr) {
+    return (
+      <StateCard
+        backHref="/admin/periods"
+        backLabel="Volver a periodos"
+        title={uiErr.title}
+        message={uiErr.message}
+      />
     );
   }
 
@@ -235,13 +274,13 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
       <ExportActions
         onOpenImport={() => setImportOpen(true)}
         exporting={exporting}
+        periodStatus={summary?.period.status}
         onExportCsv={async () => {
           try {
             setExporting("csv");
-            const base = import.meta.env.PUBLIC_API_BASE;
             const periodName = summary?.period?.name ?? `periodo-${pid}`;
-            await downloadWithAuth(
-              `${base}/admin/periods/${pid}/export.csv`,
+            await apiDownload(
+              `/admin/periods/${pid}/export.csv`,
               `reporte-${safeFileName(periodName)}.csv`
             );
           } catch (e: any) {
@@ -253,10 +292,9 @@ export default function AdminPeriodDetail({ periodId }: { periodId: string }) {
         onExportPdf={async () => {
           try {
             setExporting("pdf");
-            const base = import.meta.env.PUBLIC_API_BASE;
             const periodName = summary?.period?.name ?? `periodo-${pid}`;
-            await downloadWithAuth(
-              `${base}/admin/periods/${pid}/report.pdf`,
+            await apiDownload(
+              `/admin/periods/${pid}/report.pdf`,
               `reporte-${safeFileName(periodName)}.pdf`
             );
           } catch (e: any) {

@@ -11,6 +11,13 @@ const ParamsSchema = z.object({
   periodId: z.coerce.number().int().positive(),
 });
 
+const RowSchema = z.object({
+  rut: z.string().min(3, "RUT inválido / vacío"),
+  nombre: z.string().min(1, "Nombre vacío"),
+  email: z.email("Email inválido"),
+  curso: z.string().optional().or(z.literal("")),
+});
+
 function str(v: any) {
   return (v ?? "").toString().trim();
 }
@@ -25,6 +32,54 @@ function pick(row: Record<string, any>, keys: string[]) {
     if (found) return row[found];
   }
   return "";
+}
+
+function normalizeHeaderKey(k: string) {
+  return (k || "")
+    .toString()
+    .trim()
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "") // sin tildes
+    .replace(/\s+/g, "");
+}
+
+// mapea sinónimos → canonical
+const HEADER_MAP: Record<string, "rut" | "nombre" | "email" | "curso"> = {
+  rut: "rut",
+  run: "rut",
+  "rut/dv": "rut",
+  nombre: "nombre",
+  name: "nombre",
+  alumno: "nombre",
+  estudiante: "nombre",
+  email: "email",
+  correo: "email",
+  mail: "email",
+  curso: "curso",
+  course: "curso",
+  cursoactual: "curso",
+};
+
+function canonicalizeRowKeys(row: Record<string, any>) {
+  const out: Record<string, any> = {};
+  for (const [k, v] of Object.entries(row)) {
+    const nk = normalizeHeaderKey(k);
+    const canonical = HEADER_MAP[nk];
+    if (canonical) out[canonical] = v;
+  }
+  return out;
+}
+
+function getPresentCanonicalHeaders(rows: Record<string, any>[]) {
+  const set = new Set<string>();
+  for (const r of rows) {
+    for (const k of Object.keys(r)) {
+      const canonical = HEADER_MAP[normalizeHeaderKey(k)];
+      if (canonical) set.add(canonical);
+    }
+  }
+  return set;
 }
 
 export async function adminImportEnrollmentsXlsx(req: Request, res: Response) {
@@ -54,35 +109,56 @@ export async function adminImportEnrollmentsXlsx(req: Request, res: Response) {
     return res.status(400).json({ ok: false, error: "Empty sheet" });
   }
 
+  const present = getPresentCanonicalHeaders(rows);
+
+  const required = ["rut", "nombre", "email"] as const;
+  const missing = required.filter((k) => !present.has(k));
+
+  if (missing.length) {
+    return res.status(422).json({
+      ok: false,
+      error: "Plantilla inválida",
+      details: {
+        missingColumns: missing,
+        expected: ["rut", "nombre", "email", "curso (opcional)"],
+      },
+    });
+  }
+
   let createdUsers = 0;
   let updatedUsers = 0;
   let enrolled = 0;
   let alreadyEnrolled = 0;
 
-  const errors: Array<{ row: number; message: string }> = [];
+  const errors: Array<{ row: number; message: string; field?: string }> = [];
+  const MAX_ERRORS = 200; // evita respuestas gigantes
 
   // Import row by row (MVP). Si luego quieres rendimiento, lo optimizamos con bulk ops.
   for (let i = 0; i < rows.length; i++) {
-    const r = rows[i];
+    const raw = rows[i];
 
-    const rutRaw = pick(r, ["rut", "RUT"]);
-    const nameRaw = pick(r, ["nombre", "name", "Nombre"]);
-    const courseRaw = pick(r, ["curso", "course", "Curso"]);
-    const emailRaw = pick(r, ["email", "correo", "Email", "Correo"]);
+    const canon = canonicalizeRowKeys(raw);
+    const parsedRow = RowSchema.safeParse({
+      rut: normalizeRut(String(canon.rut ?? "")),
+      nombre: String(canon.nombre ?? "").trim(),
+      email: String(canon.email ?? "").trim(),
+      curso: String(canon.curso ?? "").trim(),
+    });
 
-    const rut = normalizeRut(str(rutRaw));
-    const name = str(nameRaw);
-    const course = str(courseRaw);
-    const email = str(emailRaw);
-
-    if (!rut || rut.length < 3) {
-      errors.push({ row: i + 2, message: "RUT inválido / vacío" });
+    if (!parsedRow.success) {
+      for (const issue of parsedRow.error.issues) {
+        errors.push({
+          row: i + 2,
+          field: String(issue.path?.[0] ?? ""),
+          message: issue.message,
+        });
+        if (errors.length >= MAX_ERRORS) break;
+      }
+      if (errors.length >= MAX_ERRORS) break;
       continue;
     }
-    if (!name) {
-      errors.push({ row: i + 2, message: "Nombre vacío" });
-      continue;
-    }
+
+    const { rut, nombre: name, email, curso: course } = parsedRow.data;
 
     // 1) Upsert user student por rut
     let user = await User.findOne({ where: { rut } });
@@ -94,9 +170,10 @@ export async function adminImportEnrollmentsXlsx(req: Request, res: Response) {
       user = await User.create({
         role: "student",
         name,
+        organizationId: req.auth.organizationId,
         email: email || null,
         rut,
-        password: passwordHash, // ajusta si tu columna se llama passwordHash
+        passwordHash,
       } as any);
 
       createdUsers++;

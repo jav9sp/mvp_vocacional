@@ -42,12 +42,6 @@ router.get(
   adminListEnrollments
 );
 router.get(
-  "/attempts/:attemptId/result",
-  requireAuth,
-  requireRole("admin"),
-  adminGetAttemptResult
-);
-router.get(
   "/periods/:periodId/export.csv",
   requireAuth,
   requireRole("admin"),
@@ -84,6 +78,14 @@ router.get(
   requireRole("admin"),
   getPeriodStudents
 );
+
+router.get(
+  "/attempts/:attemptId/result",
+  requireAuth,
+  requireRole("admin"),
+  adminGetAttemptResult
+);
+
 router.get(
   "/students/:studentId",
   requireAuth,

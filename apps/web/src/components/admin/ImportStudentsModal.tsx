@@ -1,14 +1,18 @@
 import { useMemo, useState } from "react";
+import { api } from "../../lib/api";
 
-type ImportStudentsModalProps = {
-  open: boolean;
-  onClose: () => void;
-  periodId: number;
-  onImported?: () => void;
+type ImportErrorResp = {
+  ok: false;
+  error?: string;
+  details?: {
+    missingColumns?: string[];
+    expected?: string[];
+  };
+  errors?: Array<{ row: number; message: string; field?: string }>;
 };
 
-type ImportResp = {
-  ok: boolean;
+type ImportSuccessResp = {
+  ok: true;
   period: { id: number; name: string };
   summary: {
     rows: number;
@@ -18,8 +22,19 @@ type ImportResp = {
     alreadyEnrolled: number;
     errors: number;
   };
-  errors: Array<{ row: number; message: string }>;
+  errors?: Array<{ row: number; message: string; field?: string }>;
 };
+
+type ImportResp = ImportSuccessResp | ImportErrorResp;
+
+type ImportStudentsModalProps = {
+  open: boolean;
+  onClose: () => void;
+  periodId: number;
+  onImported?: (resp: ImportResp) => void;
+};
+
+const API_BASE = import.meta.env.PUBLIC_API_BASE || "http://localhost:4000";
 
 export default function ImportStudentsModal({
   open,
@@ -28,209 +43,207 @@ export default function ImportStudentsModal({
   onImported,
 }: ImportStudentsModalProps) {
   const [file, setFile] = useState<File | null>(null);
-  const [busy, setBusy] = useState(false);
-  const [err, setErr] = useState<string | null>(null);
-  const [resp, setResp] = useState<ImportResp | null>(null);
+  const [submitting, setSubmitting] = useState(false);
+  const [result, setResult] = useState<ImportSuccessResp | null>(null);
+  const [serverError, setServerError] = useState<ImportErrorResp | null>(null);
+  const [errMsg, setErrMsg] = useState<string | null>(null);
 
-  const canUpload = useMemo(() => !!file && !busy, [file, busy]);
+  const canSubmit = useMemo(() => !!file && !submitting, [file, submitting]);
 
   if (!open) return null;
 
-  async function upload() {
-    if (!file) return;
-    setBusy(true);
-    setErr(null);
-    setResp(null);
+  function close() {
+    if (submitting) return;
+    setFile(null);
+    setResult(null);
+    setServerError(null);
+    setErrMsg(null);
+    onClose();
+  }
 
+  async function onSubmit() {
+    setErrMsg(null);
+    setResult(null);
+    setServerError(null);
+
+    if (!file) {
+      setErrMsg("Selecciona un archivo .xlsx");
+      return;
+    }
+
+    setSubmitting(true);
     try {
       const fd = new FormData();
       fd.append("file", file);
 
-      // api() asume JSON; para multipart conviene fetch directo
-      const r = await fetch(
-        `${
-          import.meta.env.PUBLIC_API_BASE
-        }/admin/periods/${periodId}/import-xlsx`,
-        {
-          method: "POST",
-          body: fd,
-          headers: {
-            // deja que el browser ponga el boundary
-            Authorization: `Bearer ${localStorage.getItem("token") || ""}`,
-          },
-        }
+      const data = await api<ImportResp>(
+        `/admin/periods/${periodId}/import-xlsx`,
+        { method: "POST", body: fd }
       );
 
-      const data = (await r.json()) as ImportResp;
-
-      if (!r.ok || !data.ok) {
-        throw new Error((data as any)?.error || `HTTP ${r.status}`);
+      if (data.ok) {
+        setResult(data);
+        onImported?.(data);
+      } else {
+        setServerError(data);
+        setErrMsg(data.error || "Error al importar");
       }
-
-      setResp(data);
-      onImported?.();
     } catch (e: any) {
-      setErr(e.message || "Error al importar");
+      // api.ts adjunta e.data si el server respondió JSON
+      if (e?.data && typeof e.data === "object") {
+        setServerError(e.data as ImportErrorResp);
+        setErrMsg(e.data?.error || e.message);
+      } else {
+        setErrMsg(e.message);
+      }
     } finally {
-      setBusy(false);
+      setSubmitting(false);
     }
   }
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
-      onClick={() => !busy && onClose()}>
+      onClick={close}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/35 p-4">
       <div
-        className="w-full max-w-xl overflow-hidden rounded-2xl border border-border bg-white shadow-xl"
-        onClick={(e) => e.stopPropagation()}>
-        <div className="flex items-center justify-between border-b border-border px-4 py-3">
-          <div>
-            <h3 className="text-base font-extrabold">
-              Importar estudiantes (XLSX)
-            </h3>
-            <p className="mt-0.5 text-xs text-muted">
-              Sube una planilla .xlsx con columnas tipo: RUT, Nombre, Email,
-              Curso.
-            </p>
-          </div>
-
+        onClick={(e) => e.stopPropagation()}
+        className="w-full max-w-xl rounded-2xl border border-border bg-white shadow-lg">
+        <div className="flex items-center justify-between border-b border-border p-4">
+          <div className="font-extrabold">Importar estudiantes (XLSX)</div>
           <button
             type="button"
-            className="rounded-lg px-2 py-1 text-sm text-slate-600 hover:bg-slate-100 disabled:opacity-50"
-            onClick={onClose}
-            disabled={busy}
-            aria-label="Cerrar">
+            onClick={close}
+            disabled={submitting}
+            className="rounded-lg px-2 py-1 text-sm hover:bg-slate-100">
             ✕
           </button>
         </div>
 
-        <div className="grid gap-3 px-4 py-4">
-          {err && (
-            <div className="rounded-xl border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
-              {err}
-            </div>
-          )}
-
-          <div className="rounded-2xl border border-dashed border-border p-4">
-            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-              <div className="text-sm">
-                <div className="font-semibold">Archivo</div>
-                <div className="text-xs text-muted">
-                  Acepta .xlsx (recomendado). La primera hoja será importada.
-                </div>
-              </div>
-
-              <label className="btn btn-secondary inline-flex cursor-pointer items-center justify-center">
-                <input
-                  type="file"
-                  accept=".xlsx,.xls"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0] || null;
-                    setFile(f);
-                    setResp(null);
-                    setErr(null);
-                  }}
-                  disabled={busy}
-                />
-                Elegir archivo
-              </label>
-            </div>
-
-            <div className="mt-3 text-sm">
-              {file ? (
-                <div className="flex items-center justify-between gap-2 rounded-xl bg-slate-50 px-3 py-2">
-                  <div className="min-w-0">
-                    <div className="truncate font-medium">{file.name}</div>
-                    <div className="text-xs text-muted">
-                      {(file.size / 1024).toFixed(1)} KB
-                    </div>
-                  </div>
-                  <button
-                    type="button"
-                    className="text-xs text-slate-600 hover:underline disabled:opacity-50"
-                    onClick={() => setFile(null)}
-                    disabled={busy}>
-                    Quitar
-                  </button>
-                </div>
-              ) : (
-                <div className="text-xs text-muted">
-                  No hay archivo seleccionado.
-                </div>
-              )}
-            </div>
+        <div className="grid gap-3 p-4">
+          <div className="rounded-xl border border-border bg-slate-50 p-3 text-sm text-slate-700">
+            <div className="font-semibold">Formato esperado</div>
+            <ul className="mt-1 list-disc pl-5 text-xs text-slate-600">
+              <li>
+                Columnas (mínimo): <b>rut</b>, <b>nombre</b>, <b>email</b>
+              </li>
+              <li>
+                Opcional: <b>curso</b>
+              </li>
+              <li>Se importa la primera hoja del Excel</li>
+            </ul>
           </div>
 
-          {resp && (
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50 p-4">
-              <div className="text-sm font-bold text-emerald-900">
-                Importación completada
+          <div className="grid gap-2">
+            <label className="text-sm font-semibold">Archivo .xlsx</label>
+            <input
+              type="file"
+              accept=".xlsx"
+              disabled={submitting}
+              onChange={(e) => setFile(e.target.files?.[0] || null)}
+              className="block w-full rounded-xl border border-border bg-white px-3 py-2 text-sm"
+            />
+            {file && (
+              <div className="text-xs text-muted">
+                Seleccionado: <span className="font-semibold">{file.name}</span>
               </div>
+            )}
+          </div>
 
-              <div className="mt-3 grid gap-2 sm:grid-cols-2">
-                <Stat label="Filas leídas" value={resp.summary.rows} />
-                <Stat
-                  label="Usuarios creados"
-                  value={resp.summary.createdUsers}
-                />
-                <Stat
-                  label="Usuarios actualizados"
-                  value={resp.summary.updatedUsers}
-                />
-                <Stat label="Enrolados" value={resp.summary.enrolled} />
-                <Stat
-                  label="Ya enrolados"
-                  value={resp.summary.alreadyEnrolled}
-                />
-                <Stat label="Errores" value={resp.summary.errors} />
+          {errMsg && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+              {errMsg}
+            </div>
+          )}
+
+          {result?.summary && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 p-3 text-sm text-emerald-900">
+              <div className="font-semibold">Importación completada</div>
+              <div className="mt-1 grid grid-cols-2 gap-2 text-xs">
+                <div>Filas: {result.summary.rows}</div>
+                <div>Creados: {result.summary.createdUsers}</div>
+                <div>Actualizados: {result.summary.updatedUsers}</div>
+                <div>Enrolados: {result.summary.enrolled}</div>
+                <div>Ya inscritos: {result.summary.alreadyEnrolled}</div>
+                <div>Errores: {result.summary.errors}</div>
               </div>
+            </div>
+          )}
 
-              {resp.errors?.length > 0 && (
-                <div className="mt-3 rounded-xl border border-emerald-200 bg-white p-3">
-                  <div className="text-xs font-semibold text-emerald-900">
-                    Errores (primeros {Math.min(resp.errors.length, 20)})
-                  </div>
-                  <ul className="mt-2 max-h-40 overflow-auto text-xs text-emerald-900">
-                    {resp.errors.slice(0, 20).map((e, idx) => (
-                      <li key={idx} className="py-0.5">
-                        Fila {e.row}: {e.message}
-                      </li>
+          {result?.errors?.length ? (
+            <div className="rounded-xl border border-border p-3">
+              <div className="text-sm font-bold">Errores</div>
+              <div className="mt-2 max-h-48 overflow-auto">
+                <table className="w-full text-left text-xs">
+                  <thead className="text-[11px] uppercase text-muted">
+                    <tr>
+                      <th className="py-1">Fila</th>
+                      <th className="py-1">Mensaje</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {result.errors.map((e, idx) => (
+                      <tr key={idx} className="border-t border-border">
+                        <td className="py-1 font-mono">{e.row}</td>
+                        <td className="py-1">{e.message}</td>
+                      </tr>
                     ))}
-                  </ul>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          ) : null}
+
+          {serverError?.details?.missingColumns?.length ? (
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-3 text-sm text-amber-900">
+              <div className="font-semibold">Plantilla inválida</div>
+              <div className="mt-1 text-xs">
+                Faltan columnas: {serverError.details.missingColumns.join(", ")}
+              </div>
+              <div className="mt-2 text-xs text-amber-800">
+                Esperado: {serverError.details.expected?.join(" · ")}
+              </div>
+            </div>
+          ) : null}
+
+          {serverError?.errors?.length ? (
+            <div className="mt-3 rounded-xl border border-slate-200 bg-white p-3">
+              <div className="text-sm font-semibold">
+                Errores ({serverError.errors.length})
+              </div>
+              <ul className="mt-2 max-h-56 list-disc overflow-auto pl-5 text-xs text-slate-700">
+                {serverError.errors.slice(0, 50).map((er: any, idx: number) => (
+                  <li key={idx}>
+                    Fila {er.row}: {er.field ? `[${er.field}] ` : ""}
+                    {er.message}
+                  </li>
+                ))}
+              </ul>
+              {serverError.errors.length > 50 && (
+                <div className="mt-2 text-xs text-muted">
+                  Mostrando 50 de {serverError.errors.length}…
                 </div>
               )}
             </div>
-          )}
-        </div>
+          ) : null}
 
-        <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-3">
-          <button
-            type="button"
-            className="btn btn-secondary"
-            onClick={onClose}
-            disabled={busy}>
-            Cerrar
-          </button>
-
-          <button
-            type="button"
-            className="btn btn-primary"
-            onClick={upload}
-            disabled={!canUpload}>
-            {busy ? "Importando…" : "Importar"}
-          </button>
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={close}
+              disabled={submitting}>
+              Cerrar
+            </button>
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={onSubmit}
+              disabled={!canSubmit}>
+              {submitting ? "Importando…" : "Importar"}
+            </button>
+          </div>
         </div>
       </div>
-    </div>
-  );
-}
-
-function Stat({ label, value }: { label: string; value: number }) {
-  return (
-    <div className="rounded-xl border border-emerald-200 bg-white px-3 py-2">
-      <div className="text-[11px] text-muted">{label}</div>
-      <div className="text-lg font-extrabold">{value}</div>
     </div>
   );
 }

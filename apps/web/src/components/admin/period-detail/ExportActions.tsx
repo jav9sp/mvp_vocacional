@@ -1,6 +1,7 @@
 type ExportActionsProps = {
   onOpenImport: () => void;
   exporting: null | "csv" | "pdf";
+  periodStatus?: string;
   onExportCsv: () => Promise<void>;
   onExportPdf: () => Promise<void>;
 };
@@ -8,17 +9,23 @@ type ExportActionsProps = {
 export default function ExportActions({
   onOpenImport,
   exporting,
+  periodStatus,
   onExportCsv,
   onExportPdf,
 }: ExportActionsProps) {
+  const normStatus = (periodStatus ?? "").toString().trim().toLowerCase();
+  const canImport = normStatus !== "closed";
+
   return (
     <div className="flex flex-wrap items-center gap-2">
-      <button
-        className="btn btn-secondary"
-        type="button"
-        onClick={onOpenImport}>
-        Importar XLSX
-      </button>
+      {canImport && (
+        <button
+          className="btn btn-secondary"
+          type="button"
+          onClick={onOpenImport}>
+          Importar XLSX
+        </button>
+      )}
 
       <button
         className="btn btn-secondary"
@@ -29,7 +36,7 @@ export default function ExportActions({
       </button>
 
       <button
-        className="btn btn-primary"
+        className="btn btn-secondary"
         type="button"
         disabled={!!exporting}
         onClick={onExportPdf}>

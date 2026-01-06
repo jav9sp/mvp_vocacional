@@ -1,5 +1,4 @@
 import type { StudentRow } from "../lib/adminPeriod";
-import { getToken } from "../lib/auth";
 
 // For Admin Period Details
 export const TOTAL_QUESTIONS = 103;
@@ -19,43 +18,6 @@ export function safeFileName(name: string) {
     .replace(/[^a-z0-9-_]+/g, "-")
     .replace(/-+/g, "-")
     .replace(/(^-|-$)/g, "");
-}
-
-export async function downloadWithAuth(url: string, filename: string) {
-  let token = getToken();
-
-  if (!token) {
-    throw new Error(
-      "No hay token en localStorage (revisa cómo lo guarda tu login)"
-    );
-  }
-
-  // evita "Bearer Bearer xxx"
-  const authHeader = token.toLowerCase().startsWith("bearer ")
-    ? token
-    : `Bearer ${token}`;
-
-  const r = await fetch(url, {
-    method: "GET",
-    headers: { Authorization: authHeader },
-  });
-
-  if (!r.ok) {
-    const text = await r.text().catch(() => "");
-    throw new Error(text || `HTTP ${r.status}`);
-  }
-
-  const blob = await r.blob();
-  const objectUrl = URL.createObjectURL(blob);
-
-  const a = document.createElement("a");
-  a.href = objectUrl;
-  a.download = filename;
-  document.body.appendChild(a);
-  a.click();
-  a.remove();
-
-  setTimeout(() => URL.revokeObjectURL(objectUrl), 1000);
 }
 
 export function clamp(n: number, min: number, max: number) {
@@ -94,4 +56,45 @@ export function getActiveHref(path: string, nav: { href: string }[]) {
   return nav
     .filter((it) => path === it.href || path.startsWith(it.href + "/"))
     .sort((a, b) => b.href.length - a.href.length)[0]?.href;
+}
+
+export type UiError =
+  | { kind: "invalid_id"; title: string; message: string }
+  | { kind: "not_found"; title: string; message: string }
+  | { kind: "forbidden"; title: string; message: string }
+  | { kind: "unauthorized"; title: string; message: string }
+  | { kind: "unknown"; title: string; message: string; details?: any };
+
+export function toUiError(e: any): UiError {
+  const status = e?.status;
+  const apiMsg = e?.data?.error || e?.message;
+
+  if (status === 404) {
+    return {
+      kind: "not_found",
+      title: "No encontrado",
+      message: "No pudimos encontrar el recurso solicitado.",
+    };
+  }
+  if (status === 403) {
+    return {
+      kind: "forbidden",
+      title: "Acceso restringido",
+      message: "No tienes permisos para ver esta información.",
+    };
+  }
+  if (status === 401) {
+    return {
+      kind: "unauthorized",
+      title: "Sesión expirada",
+      message: "Vuelve a iniciar sesión para continuar.",
+    };
+  }
+
+  return {
+    kind: "unknown",
+    title: "Ocurrió un problema",
+    message: apiMsg || "Error inesperado. Intenta nuevamente.",
+    details: e?.data,
+  };
 }

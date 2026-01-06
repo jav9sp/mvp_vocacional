@@ -54,6 +54,11 @@ app.use((req, _res, next) => {
   next();
 });
 
+app.use((err: any, _req: any, res: any, _next: any) => {
+  console.error(err);
+  return res.status(500).json({ ok: false, error: "Internal server error" });
+});
+
 app.use("/auth", authRoutes);
 app.use("/", meRoutes);
 app.use("/test", testRoutes);
