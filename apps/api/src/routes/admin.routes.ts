@@ -16,7 +16,11 @@ import {
   getPeriodStudents,
   getPeriodSummary,
 } from "../controllers/admin.periods.detail.controller.ts";
-import { adminGetStudentDetail } from "../controllers/admin.students.controller.ts";
+import {
+  adminGetStudentDetail,
+  adminGetStudents,
+  adminListStudents,
+} from "../controllers/admin.students.controller.ts";
 import { adminGetDashboard } from "../controllers/admin.dashboard.controller.ts";
 import { adminListTests } from "../controllers/admin.tests.controller.ts";
 
@@ -86,6 +90,7 @@ router.get(
   adminGetAttemptResult
 );
 
+router.get("/students", requireAuth, requireRole("admin"), adminGetStudents);
 router.get(
   "/students/:studentId",
   requireAuth,

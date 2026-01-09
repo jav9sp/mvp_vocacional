@@ -1,63 +1,49 @@
 import { useEffect, useMemo, useState } from "react";
+import { z } from "zod";
 import { requireAuth } from "../../lib/guards";
-import { api } from "../../lib/api";
+import { apiZ } from "../../lib/apiZ";
 
-type StudentDetailResp = {
-  ok: boolean;
-  student: {
-    id: number;
-    rut: string;
-    name: string;
-    email: string;
-    role: "student";
-    createdAt: string;
-  };
-  summary: {
-    totalPeriods: number;
-    finished: number;
-    inProgress: number;
-    notStarted: number;
-  };
-  rows: Array<{
-    enrollmentId: number;
-    enrollmentStatus: string;
-    meta: any;
-    period: {
-      id: number;
-      name: string;
-      status: string;
-      startAt: string | null;
-      endAt: string | null;
-      testId: number;
-      createdAt: string;
-    };
-    status: "not_started" | "in_progress" | "finished";
-    attempt: null | {
-      id: number;
-      status: "in_progress" | "finished";
-      answeredCount: number;
-      createdAt: string;
-      finishedAt: string | null;
-      testId: number;
-    };
-  }>;
-};
+const AttemptSchema = z
+  .object({
+    id: z.number(),
+    status: z.enum(["in_progress", "finished"]),
+    answeredCount: z.number(),
+    createdAt: z.string().nullable().optional(),
+    finishedAt: z.string().nullable().optional(),
+    periodId: z.number().optional(),
+  })
+  .nullable();
 
-const TOTAL = 103;
+const EnrollmentSchema = z.object({
+  id: z.number(),
+  period: z.object({
+    id: z.number(),
+    name: z.string(),
+    status: z.string(), // "draft" | "active" | "closed" (string para MVP)
+    startAt: z.string().nullable().optional(),
+    endAt: z.string().nullable().optional(),
+  }),
+  status: z.string(), // EnrollmentStatus: invited|active|completed|removed (string MVP)
+  course: z.string().nullable().optional(),
+  derivedStatus: z.enum(["not_started", "in_progress", "finished"]),
+  attempt: AttemptSchema,
+});
 
-function formatDate(d?: string | null) {
-  if (!d) return "—";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "—";
-  return dt.toLocaleDateString();
-}
+const StudentDetailRespSchema = z.object({
+  ok: z.literal(true),
+  student: z.object({
+    id: z.number(),
+    rut: z.string().nullable().optional(),
+    name: z.string(),
+    email: z.string().nullable().optional(),
+  }),
+  enrollments: z.array(EnrollmentSchema),
+});
 
-function formatDateTime(d?: string | null) {
-  if (!d) return "—";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "—";
-  return dt.toLocaleString();
-}
+type StudentDetailResp = z.infer<typeof StudentDetailRespSchema>;
+type EnrollmentRow = StudentDetailResp["enrollments"][number];
+
+const TOTAL_QUESTIONS = 103;
 
 function statusLabel(s: "not_started" | "in_progress" | "finished") {
   if (s === "finished") return "Finalizado";
@@ -73,9 +59,26 @@ function statusPillClass(s: "not_started" | "in_progress" | "finished") {
   return `${base} bg-slate-100 text-slate-700`;
 }
 
-function pct(answeredCount?: number | null) {
-  const v = Math.max(0, Math.min(Number(answeredCount ?? 0), TOTAL));
-  return Math.round((v / TOTAL) * 100);
+function badgePeriodStatus(status: string) {
+  const s = (status || "").toLowerCase();
+  const base =
+    "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold";
+  if (s === "active") return `${base} bg-emerald-100 text-emerald-800`;
+  if (s === "closed") return `${base} bg-slate-100 text-slate-700`;
+  if (s === "draft") return `${base} bg-amber-100 text-amber-800`;
+  return `${base} bg-slate-100 text-slate-700`;
+}
+
+function formatDateTime(d?: string | null) {
+  if (!d) return "—";
+  const dt = new Date(d);
+  if (Number.isNaN(dt.getTime())) return "—";
+  return dt.toLocaleString();
+}
+
+function progressPct(answeredCount?: number | null) {
+  const v = Math.min(Math.max(Number(answeredCount ?? 0), 0), TOTAL_QUESTIONS);
+  return Math.round((v / TOTAL_QUESTIONS) * 100);
 }
 
 export default function AdminStudentDetail({
@@ -83,35 +86,45 @@ export default function AdminStudentDetail({
 }: {
   studentId: string;
 }) {
-  const id = Number(studentId);
+  const sid = Number(studentId);
 
   const [loading, setLoading] = useState(true);
   const [err, setErr] = useState<string | null>(null);
+
   const [data, setData] = useState<StudentDetailResp | null>(null);
+
+  const enrollmentsSorted = useMemo(() => {
+    const rows = data?.enrollments ?? [];
+    const order = { not_started: 0, in_progress: 1, finished: 2 } as const;
+    return [...rows].sort(
+      (a, b) => order[a.derivedStatus] - order[b.derivedStatus]
+    );
+  }, [data]);
 
   useEffect(() => {
     const ok = requireAuth("admin");
     if (!ok) return;
 
-    if (!Number.isFinite(id)) {
-      setErr("studentId inválido");
+    if (!Number.isFinite(sid)) {
+      setErr("ID de estudiante inválido");
       setLoading(false);
       return;
     }
 
+    setLoading(true);
+    setErr(null);
+
     (async () => {
       try {
-        const resp = await api<StudentDetailResp>(`/admin/students/${id}`);
-        setData(resp);
+        const r = await apiZ(`/admin/students/${sid}`, StudentDetailRespSchema);
+        setData(r);
       } catch (e: any) {
         setErr(e.message);
       } finally {
         setLoading(false);
       }
     })();
-  }, [id]);
-
-  const rows = useMemo(() => data?.rows ?? [], [data]);
+  }, [sid]);
 
   if (loading) {
     return (
@@ -125,9 +138,9 @@ export default function AdminStudentDetail({
     return (
       <div className="space-y-3">
         <a
-          href="/admin/periods"
+          href="/admin/students"
           className="text-sm text-slate-600 hover:underline">
-          ← Volver
+          ← Volver a estudiantes
         </a>
         <div className="card border-red-200">
           <p className="text-sm text-red-600">Error: {err}</p>
@@ -136,79 +149,57 @@ export default function AdminStudentDetail({
     );
   }
 
-  if (!data?.ok) {
-    return (
-      <div className="card border-red-200">
-        <p className="text-sm text-red-600">No se pudo cargar el estudiante.</p>
-      </div>
-    );
-  }
-
-  const s = data.student;
-  const sum = data.summary;
+  const student = data!.student;
 
   return (
     <div className="space-y-4">
+      <a
+        href="/admin/students"
+        className="text-sm text-slate-600 hover:underline">
+        ← Volver a estudiantes
+      </a>
+
+      {/* Header */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-end sm:justify-between">
         <div>
-          <h1 className="text-2xl font-extrabold tracking-tight">{s.name}</h1>
-          <div className="mt-1 text-sm text-muted">
-            <span className="font-mono text-xs">{s.rut}</span>
-            {s.email ? <span className="ml-2">· {s.email}</span> : null}
+          <h1 className="text-2xl font-extrabold tracking-tight">
+            {student.name}
+          </h1>
+          <div className="mt-1 flex flex-wrap items-center gap-2 text-sm text-muted">
+            <span className="rounded-full border border-border px-3 py-1 text-xs">
+              ID: <span className="font-semibold text-fg">{student.id}</span>
+            </span>
+            <span className="rounded-full border border-border px-3 py-1 text-xs font-mono">
+              {student.rut ?? "—"}
+            </span>
+            <span className="text-xs">{student.email ?? "—"}</span>
           </div>
-        </div>
-
-        <div className="text-xs text-muted">
-          <div>
-            ID: <span className="font-semibold text-slate-900">{s.id}</span>
-          </div>
-          <div>Creado: {formatDateTime(s.createdAt)}</div>
         </div>
       </div>
 
-      {/* resumen */}
-      <section className="grid gap-3 sm:grid-cols-4">
-        <div className="card">
-          <div className="text-xs text-muted">Periodos</div>
-          <div className="mt-1 text-2xl font-extrabold">{sum.totalPeriods}</div>
-        </div>
-        <div className="card">
-          <div className="text-xs text-muted">Finalizados</div>
-          <div className="mt-1 text-2xl font-extrabold">{sum.finished}</div>
-        </div>
-        <div className="card">
-          <div className="text-xs text-muted">En progreso</div>
-          <div className="mt-1 text-2xl font-extrabold">{sum.inProgress}</div>
-        </div>
-        <div className="card">
-          <div className="text-xs text-muted">No iniciado</div>
-          <div className="mt-1 text-2xl font-extrabold">{sum.notStarted}</div>
-        </div>
-      </section>
-
-      {/* historial */}
+      {/* Enrollments */}
       <section className="card">
-        <div className="flex items-start justify-between gap-3">
+        <div className="flex items-end justify-between gap-3">
           <div>
-            <h2 className="text-lg font-bold">Historial por periodo</h2>
+            <h2 className="text-lg font-bold">Periodos</h2>
             <p className="mt-1 text-sm text-muted">
-              Estado y progreso del test dentro de cada periodo.
+              Historial de inscripciones e intentos del estudiante.
             </p>
           </div>
-          <a
-            href="/admin/periods"
-            className="text-sm text-slate-600 hover:underline">
-            ← Periodos
-          </a>
+          <div className="text-xs text-muted">
+            {enrollmentsSorted.length}{" "}
+            {enrollmentsSorted.length === 1 ? "registro" : "registros"}
+          </div>
         </div>
 
-        <div className="mt-3 overflow-x-auto">
+        <div className="mt-4 overflow-x-auto">
           <table className="w-full text-left text-sm">
             <thead className="text-xs uppercase text-muted">
               <tr>
                 <th className="py-2">Periodo</th>
-                <th className="py-2">Estado</th>
-                <th className="py-2">Rango</th>
+                <th className="py-2">Estado periodo</th>
+                <th className="py-2">Curso</th>
+                <th className="py-2">Estado test</th>
                 <th className="py-2">Progreso</th>
                 <th className="py-2">Finalizado</th>
                 <th className="py-2 text-right">Acciones</th>
@@ -216,56 +207,56 @@ export default function AdminStudentDetail({
             </thead>
 
             <tbody>
-              {rows.length === 0 ? (
+              {enrollmentsSorted.length === 0 ? (
                 <tr className="border-t border-border">
-                  <td className="py-3 text-muted" colSpan={6}>
-                    No hay periodos para este estudiante en tu organización.
+                  <td className="py-3 text-muted" colSpan={7}>
+                    Este estudiante no tiene enrollments.
                   </td>
                 </tr>
               ) : (
-                rows.map((r) => (
-                  <tr
-                    key={r.enrollmentId}
-                    className="border-t border-border align-top">
+                enrollmentsSorted.map((r) => (
+                  <tr key={r.id} className="border-t border-border align-top">
                     <td className="py-3">
-                      <div className="font-semibold">
-                        {r.period.name ?? `Periodo #${r.period.id}`}
-                      </div>
+                      <div className="font-semibold">{r.period.name}</div>
                       <div className="mt-0.5 text-xs text-muted">
-                        Creado: {formatDate(r.period.createdAt)}
+                        Enrollment #{r.id} · estado: {r.status}
                       </div>
                     </td>
 
                     <td className="py-3">
-                      <span className={statusPillClass(r.status)}>
-                        {statusLabel(r.status)}
+                      <span className={badgePeriodStatus(r.period.status)}>
+                        {r.period.status}
                       </span>
-                      <div className="mt-1 text-xs text-muted">
-                        Periodo: {r.period.status}
-                      </div>
                     </td>
 
-                    <td className="py-3 text-xs text-muted">
-                      {formatDate(r.period.startAt)} —{" "}
-                      {formatDate(r.period.endAt)}
+                    <td className="py-3 text-muted">{r.course ?? "—"}</td>
+
+                    <td className="py-3">
+                      <span className={statusPillClass(r.derivedStatus)}>
+                        {statusLabel(r.derivedStatus)}
+                      </span>
                     </td>
 
                     <td className="py-3">
-                      {r.status === "not_started" ? (
-                        <div className="text-xs text-muted">—</div>
+                      {r.derivedStatus === "not_started" ? (
+                        <span className="text-xs text-muted">—</span>
                       ) : (
-                        <div className="min-w-42.5">
+                        <div className="min-w-45">
                           <div className="flex items-center justify-between text-xs text-muted">
                             <span>
-                              {r.attempt?.answeredCount ?? 0}/{TOTAL}
+                              {r.attempt?.answeredCount ?? 0}/{TOTAL_QUESTIONS}
                             </span>
-                            <span>{pct(r.attempt?.answeredCount)}%</span>
+                            <span>
+                              {progressPct(r.attempt?.answeredCount)}%
+                            </span>
                           </div>
                           <div className="mt-1 h-2 w-full overflow-hidden rounded-full bg-slate-100">
                             <div
                               className="h-full bg-slate-900"
                               style={{
-                                width: `${pct(r.attempt?.answeredCount)}%`,
+                                width: `${progressPct(
+                                  r.attempt?.answeredCount
+                                )}%`,
                               }}
                             />
                           </div>
@@ -274,8 +265,8 @@ export default function AdminStudentDetail({
                     </td>
 
                     <td className="py-3 text-muted">
-                      {r.status === "finished"
-                        ? formatDateTime(r.attempt?.finishedAt ?? null)
+                      {r.attempt?.status === "finished"
+                        ? formatDateTime(r.attempt.finishedAt)
                         : "—"}
                     </td>
 
@@ -287,7 +278,7 @@ export default function AdminStudentDetail({
                           Ver periodo
                         </a>
 
-                        {r.status === "finished" && r.attempt?.id ? (
+                        {r.attempt?.status === "finished" ? (
                           <a
                             href={`/admin/attempts/${r.attempt.id}/result`}
                             className="inline-flex items-center rounded-xl border border-emerald-200 bg-emerald-50 px-3 py-1.5 text-sm font-semibold text-emerald-900 hover:bg-emerald-100">
