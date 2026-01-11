@@ -3,10 +3,10 @@ import cors from "cors";
 import "dotenv/config";
 import { sequelize, connectDB } from "./config/sequelize.ts";
 
-import authRoutes from "./auth/auth.routes.ts";
-import meRoutes from "./auth/me.routes.ts";
+import authRoutes from "./routes/auth/auth.routes.ts";
 import testRoutes from "./routes/test.routes.ts";
-import attemptsRoutes from "./routes/attempts.routes.ts";
+import enrollmentsRoutes from "./routes/student/enrollments.router.ts";
+import attemptsRoutes from "./routes/student/attempts.routes.ts";
 import resultsRoutes from "./routes/results.routes.ts";
 import adminRoutes from "./routes/admin.routes.ts";
 
@@ -20,6 +20,13 @@ app.use(
 );
 app.use(express.json());
 
+// Logger ANTES de rutas
+app.use((req, _res, next) => {
+  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
+  next();
+});
+
+// Health
 app.get("/health", (_req, res) => res.json({ ok: true }));
 app.get("/health/db", async (_req, res) => {
   try {
@@ -28,6 +35,29 @@ app.get("/health/db", async (_req, res) => {
   } catch (e) {
     res.status(500).json({ ok: false, error: (e as Error).message });
   }
+});
+
+// TODO: Ver cómo ordenar mejor las rutas añadiendo "/student"
+// Rutas
+app.use("/auth", authRoutes);
+app.use("/enrollments", enrollmentsRoutes);
+
+// Deprecated
+// app.use("/test", testRoutes);
+
+app.use("/attempts", attemptsRoutes);
+app.use("/results", resultsRoutes);
+app.use("/admin", adminRoutes);
+
+// (Opcional) 404 consistente
+app.use((_req, res) => {
+  res.status(404).json({ ok: false, error: "Not found" });
+});
+
+// Error handler AL FINAL
+app.use((err: any, _req: any, res: any, _next: any) => {
+  console.error(err);
+  return res.status(500).json({ ok: false, error: "Internal server error" });
 });
 
 async function bootstrap() {
@@ -48,20 +78,3 @@ bootstrap().catch((err) => {
   console.error("Bootstrap failed:", err);
   process.exit(1);
 });
-
-app.use((req, _res, next) => {
-  console.log(`[${new Date().toISOString()}] ${req.method} ${req.url}`);
-  next();
-});
-
-app.use((err: any, _req: any, res: any, _next: any) => {
-  console.error(err);
-  return res.status(500).json({ ok: false, error: "Internal server error" });
-});
-
-app.use("/auth", authRoutes);
-app.use("/", meRoutes);
-app.use("/test", testRoutes);
-app.use("/attempts", attemptsRoutes);
-app.use("/", resultsRoutes);
-app.use("/admin", adminRoutes);

@@ -1,4 +1,4 @@
-import { Request, Response } from "express";
+import { NextFunction, Request, Response } from "express";
 import { Op, fn, col, literal } from "sequelize";
 import User from "../models/User.model.ts";
 import Enrollment from "../models/Enrollment.model.ts";
@@ -328,107 +328,114 @@ export async function adminGetStudents(req: Request, res: Response) {
   });
 }
 
-export async function adminGetStudentDetail(req: Request, res: Response) {
-  const orgId = req.auth?.organizationId;
-  if (!orgId) return res.status(401).json({ ok: false, error: "Unauthorized" });
+export async function adminGetStudentDetail(
+  req: Request,
+  res: Response,
+  next: NextFunction
+) {
+  try {
+    const orgId = req.auth?.organizationId;
+    if (!orgId)
+      return res.status(401).json({ ok: false, error: "Unauthorized" });
 
-  const studentId = Number(req.params.studentId);
-  if (!Number.isFinite(studentId)) {
-    return res.status(400).json({ ok: false, error: "Invalid studentId" });
-  }
+    const studentId = Number(req.params.studentId);
+    if (!Number.isFinite(studentId)) {
+      return res.status(400).json({ ok: false, error: "Invalid studentId" });
+    }
 
-  // 1) Student (y pertenencia a la org)
-  const student = await User.findOne({
-    where: { id: studentId, role: "student", organizationId: orgId },
-    attributes: ["id", "rut", "name", "email"],
-  });
+    const student = await User.findOne({
+      where: { id: studentId, role: "student", organizationId: orgId },
+      attributes: ["id", "rut", "name", "email"],
+    });
 
-  if (!student) {
-    return res.status(404).json({ ok: false, error: "Student not found" });
-  }
+    if (!student) {
+      return res.status(404).json({ ok: false, error: "Student not found" });
+    }
 
-  // 2) Enrollments + Period (filtramos period.organizationId = orgId)
-  const enrollments = await Enrollment.findAll({
-    where: { studentUserId: student.id },
-    attributes: ["id", "periodId", "status", "meta", "createdAt"],
-    include: [
-      {
-        model: Period,
-        as: "period",
-        required: true,
-        where: { organizationId: orgId },
-        attributes: ["id", "name", "status", "startAt", "endAt", "testId"],
-      },
-    ],
-    order: [["createdAt", "DESC"]],
-  });
-
-  const periodIds = enrollments.map((e: any) => e.periodId);
-
-  // 3) Attempts del estudiante para esos periodos
-  const attempts = periodIds.length
-    ? await Attempt.findAll({
-        where: {
-          userId: student.id,
-          periodId: { [Op.in]: periodIds },
+    const enrollments = await Enrollment.findAll({
+      where: { studentUserId: student.id },
+      attributes: ["id", "periodId", "status", "meta", "createdAt"],
+      include: [
+        {
+          model: Period,
+          as: "period",
+          required: true,
+          where: { organizationId: orgId },
+          attributes: ["id", "name", "status", "startAt", "endAt", "testId"],
         },
-        attributes: [
-          "id",
-          "periodId",
-          "status",
-          "answeredCount",
-          "finishedAt",
-          "createdAt",
-        ],
-        order: [["createdAt", "DESC"]],
-      })
-    : [];
+      ],
+      order: [["createdAt", "DESC"]],
+    });
 
-  // Por si existiera más de 1 attempt por periodo: nos quedamos con el más reciente
-  const attemptByPeriodId = new Map<number, any>();
-  for (const a of attempts as any[]) {
-    if (!attemptByPeriodId.has(a.periodId))
-      attemptByPeriodId.set(a.periodId, a);
-  }
+    const periodIds = enrollments.map((e: any) => e.periodId);
 
-  const rows = enrollments.map((e: any) => {
-    const p = e.period;
-    const a = attemptByPeriodId.get(e.periodId) ?? null;
+    const attempts = periodIds.length
+      ? await Attempt.findAll({
+          where: {
+            userId: student.id,
+            periodId: { [Op.in]: periodIds },
+          },
+          attributes: [
+            "id",
+            "periodId",
+            "status",
+            "answeredCount",
+            "finishedAt",
+            "createdAt",
+          ],
+          order: [["createdAt", "DESC"]],
+        })
+      : [];
 
-    return {
-      enrollmentId: e.id,
-      enrollmentStatus: e.status, // status del enrollment (active/completed/etc)
-      course: getCourseFromMeta(e.meta),
-      derivedStatus: deriveStatus(a), // not_started/in_progress/finished (según attempt)
-      period: {
-        id: p.id,
-        name: p.name,
-        status: p.status,
-        startAt: p.startAt ?? null,
-        endAt: p.endAt ?? null,
-        testId: p.testId,
+    // Por si existiera más de 1 attempt por periodo: nos quedamos con el más reciente
+    const attemptByPeriodId = new Map<number, any>();
+    for (const a of attempts as any[]) {
+      if (!attemptByPeriodId.has(a.periodId))
+        attemptByPeriodId.set(a.periodId, a);
+    }
+
+    const rows = enrollments.map((e: any) => {
+      const p = e.period;
+      const a = attemptByPeriodId.get(e.periodId) ?? null;
+
+      return {
+        enrollmentId: e.id,
+        enrollmentStatus: e.status,
+        course: getCourseFromMeta(e.meta),
+        derivedStatus: deriveStatus(a),
+        createdAt: e.createdAt,
+        period: {
+          id: p.id,
+          name: p.name,
+          status: p.status,
+          startAt: p.startAt ?? null,
+          endAt: p.endAt ?? null,
+          testId: p.testId,
+        },
+        attempt: a
+          ? {
+              id: a.id,
+              status: a.status,
+              answeredCount: a.answeredCount,
+              createdAt: a.createdAt ?? null,
+              finishedAt: a.finishedAt ?? null,
+              periodId: a.periodId,
+            }
+          : null,
+      };
+    });
+
+    return res.json({
+      ok: true,
+      student: {
+        id: student.id,
+        rut: (student as any).rut ?? null,
+        name: student.name,
+        email: (student as any).email ?? null,
       },
-      attempt: a
-        ? {
-            id: a.id,
-            status: a.status,
-            answeredCount: a.answeredCount,
-            createdAt: a.createdAt ?? null,
-            finishedAt: a.finishedAt ?? null,
-            periodId: a.periodId,
-          }
-        : null,
-    };
-  });
-
-  return res.json({
-    ok: true,
-    student: {
-      id: student.id,
-      rut: (student as any).rut ?? null,
-      name: student.name,
-      email: (student as any).email ?? null,
-    },
-    enrollments: rows,
-  });
+      enrollments: rows,
+    });
+  } catch (error) {
+    return next(error);
+  }
 }

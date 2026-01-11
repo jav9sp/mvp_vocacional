@@ -6,5 +6,5 @@ const { studentId } = Astro.params;
 ---
 
 <AdminLayout title="Detalle de estudiante">
-  <AdminStudentDetail studentId={studentId ?? ""} client:load />
+  <AdminStudentDetail studentId={studentId!} client:load />
 </AdminLayout>

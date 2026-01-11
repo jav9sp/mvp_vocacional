@@ -1,9 +1,9 @@
 import { Request, Response } from "express";
 import { z } from "zod";
 import * as XLSX from "xlsx";
-import Period from "../models/Period.model.js";
-import Enrollment from "../models/Enrollment.model.js";
-import User from "../models/User.model.js";
+import Period from "../models/Period.model.ts";
+import Enrollment from "../models/Enrollment.model.ts";
+import User from "../models/User.model.ts";
 import { normalizeRut } from "../utils/rut.js";
 import bcrypt from "bcrypt"; // usa el que ya estés usando; si usas bcrypt, cámbialo
 

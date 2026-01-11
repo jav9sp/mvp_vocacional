@@ -9,10 +9,11 @@ import {
   Default,
   ForeignKey,
   Index,
+  BelongsTo,
 } from "sequelize-typescript";
-import User from "./User.model.js";
-import Test from "./Test.model.js";
-import Period from "./Period.model.js";
+import User from "./User.model.ts";
+import Test from "./Test.model.ts";
+import Period from "./Period.model.ts";
 
 export type AttemptStatus = "in_progress" | "finished";
 
@@ -53,6 +54,12 @@ class Attempt extends Model {
   @AllowNull(false)
   @Column(DataType.INTEGER.UNSIGNED)
   declare periodId: number;
+
+  @BelongsTo(() => Period, { foreignKey: "periodId", as: "period" })
+  declare period?: Period;
+
+  @BelongsTo(() => User, { foreignKey: "userId", as: "user" })
+  declare user?: User;
 }
 
 export default Attempt;

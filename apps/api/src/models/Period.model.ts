@@ -9,9 +9,10 @@ import {
   Default,
   ForeignKey,
   Index,
+  BelongsTo,
 } from "sequelize-typescript";
-import Organization from "./Organization.model.js";
-import Test from "./Test.model.js";
+import Organization from "./Organization.model.ts";
+import Test from "./Test.model.ts";
 
 export type PeriodStatus = "draft" | "active" | "closed";
 
@@ -59,6 +60,15 @@ class Period extends Model {
 
   @Column(DataType.JSON)
   declare settings: Record<string, any> | null;
+
+  @BelongsTo(() => Organization, {
+    foreignKey: "organizationId",
+    as: "organization",
+  })
+  declare organization?: Organization;
+
+  @BelongsTo(() => Test, { foreignKey: "testId", as: "test" })
+  declare test?: Test;
 }
 
 export default Period;

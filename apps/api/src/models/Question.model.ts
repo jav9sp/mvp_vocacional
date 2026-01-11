@@ -9,7 +9,7 @@ import {
   ForeignKey,
   Index,
 } from "sequelize-typescript";
-import Test from "./Test.model.js";
+import Test from "./Test.model.ts";
 
 @Table({
   tableName: "questions",
@@ -36,7 +36,7 @@ class Question extends Model {
 
   @AllowNull(false)
   @Column(DataType.INTEGER.UNSIGNED)
-  declare externalId: number; // 1..103
+  declare externalId: number;
 
   @AllowNull(false)
   @Column(DataType.TEXT)
@@ -44,11 +44,11 @@ class Question extends Model {
 
   @AllowNull(false)
   @Column(DataType.STRING(10))
-  declare area: string; // "adm" | ...
+  declare area: string;
 
   @AllowNull(false)
   @Column(DataType.JSON)
-  declare dim: string[]; // ["interes","aptitud"]
+  declare dim: string[];
 
   @AllowNull(false)
   @Column(DataType.INTEGER.UNSIGNED)
