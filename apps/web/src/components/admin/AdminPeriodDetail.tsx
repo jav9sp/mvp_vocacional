@@ -8,6 +8,7 @@ import PeriodKpis from "./period-detail/PeriodKpis";
 import StudentsFilters from "./period-detail/StudentsFilters";
 import StudentsTable from "./period-detail/StudentsTable";
 import StudentsPagination from "./period-detail/StudentsPagination";
+import StateCard from "../common/StateCard";
 
 import { api, apiDownload } from "../../lib/api";
 import { apiZ } from "../../lib/apiZ";
@@ -30,7 +31,6 @@ import {
   toUiError,
   type UiError,
 } from "../../utils/utils";
-import StateCard from "../common/StateCard";
 
 function badgeStatus(status: string) {
   const s = (status || "").toLowerCase();

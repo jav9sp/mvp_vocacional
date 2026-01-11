@@ -32,7 +32,7 @@ export function computeInapvScores(args: {
 
     scoresByArea[q.area] += 1;
 
-    const dims = Array.isArray(q.dim) ? q.dim : [q.dim];
+    const dims = q.dim;
     if (dims.includes("interes")) scoresByAreaDim[q.area].interes += 1;
     if (dims.includes("aptitud")) scoresByAreaDim[q.area].aptitud += 1;
 

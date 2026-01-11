@@ -9,6 +9,8 @@ type PeriodRow = {
   startAt: string | null;
   endAt: string | null;
   createdAt: string;
+  studentsCount: number;
+  finishedCount: number;
   test?: { id: number; name?: string; key?: string; version?: string };
 };
 
@@ -105,10 +107,10 @@ export default function AdminPeriodsList() {
       <div className="mt-3 overflow-x-auto">
         <table className="w-full text-left text-sm">
           <thead className="text-xs uppercase text-muted">
-            <tr>
+            <tr className="text-center">
               <th className="py-2">Nombre</th>
               <th className="py-2">Estado</th>
-              <th className="py-2">Rango</th>
+              <th className="py-2">Fechas</th>
               <th className="py-2">Test</th>
               <th className="py-2">Estudiantes</th>
               <th className="py-2">Finalizados</th>
@@ -135,7 +137,7 @@ export default function AdminPeriodsList() {
                     </div>
                   </td>
 
-                  <td className="py-3">
+                  <td className="py-3 text-center">
                     <span
                       className={[
                         "inline-flex items-center rounded-full px-2.5 py-1 text-xs font-semibold",
@@ -145,11 +147,11 @@ export default function AdminPeriodsList() {
                     </span>
                   </td>
 
-                  <td className="py-3 text-xs text-muted">
+                  <td className="py-3 text-xs text-muted text-center">
                     {formatDate(p.startAt)} — {formatDate(p.endAt)}
                   </td>
 
-                  <td className="py-3 text-xs text-muted">
+                  <td className="py-3 text-xs text-muted text-center">
                     {p.test?.name ? (
                       <div className="text-fg">{p.test.name}</div>
                     ) : (
@@ -162,14 +164,10 @@ export default function AdminPeriodsList() {
                     )}
                   </td>
 
-                  <td className="py-3">
-                    {/* por ahora no viene del backend */}—
-                  </td>
-                  <td className="py-3">
-                    {/* por ahora no viene del backend */}—
-                  </td>
+                  <td className="py-3 text-center">{p.studentsCount}</td>
+                  <td className="py-3 text-center">{p.finishedCount}</td>
 
-                  <td className="py-3 text-right">
+                  <td className="py-3 text-center">
                     <a
                       href={`/admin/periods/${p.id}`}
                       className="inline-flex items-center rounded-xl border border-border px-3 py-1.5 text-sm hover:bg-slate-50">

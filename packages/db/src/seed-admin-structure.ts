@@ -1,12 +1,12 @@
 import "dotenv/config";
 import { Sequelize } from "sequelize-typescript";
 
-import Organization from "../../../apps/api/src/models/Organization.model.js";
-import Period from "../../../apps/api/src/models/Period.model.js";
-import Enrollment from "../../../apps/api/src/models/Enrollment.model.js";
+import Organization from "../../../apps/api/src/models/Organization.model.ts";
+import Period from "../../../apps/api/src/models/Period.model.ts";
+import Enrollment from "../../../apps/api/src/models/Enrollment.model.ts";
 
-import User from "../../../apps/api/src/models/User.model.js";
-import Test from "../../../apps/api/src/models/Test.model.js";
+import User from "../../../apps/api/src/models/User.model.ts";
+import Test from "../../../apps/api/src/models/Test.model.ts";
 
 const sequelize = new Sequelize({
   dialect: "mysql",

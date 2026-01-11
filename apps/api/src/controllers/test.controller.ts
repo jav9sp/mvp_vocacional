@@ -1,19 +1,32 @@
 import { Request, Response } from "express";
 import Question from "../models/Question.model.ts";
+import Period from "../models/Period.model.ts";
 import {
   getActiveEnrollment,
-  getActiveTest,
+  getTestById,
   getOrCreateActiveAttempt,
 } from "../services/attempt.service.ts";
+
 import { INAPV_AREAS } from "../data/inapv-areas.js";
 
 export async function getCurrentTest(req: Request, res: Response) {
   try {
-    const userId = req.auth!.userId;
+    const { userId, organizationId } = req.auth!;
 
-    const test = await getActiveTest();
-    const enrollment = await getActiveEnrollment(userId);
-    const attempt = await getOrCreateActiveAttempt(userId);
+    const enrollment = await getActiveEnrollment(userId, organizationId);
+    const period = await Period.findByPk(enrollment.periodId);
+    if (!period || period.status !== "active") {
+      return res
+        .status(403)
+        .json({ ok: false, error: "No active period for this student" });
+    }
+
+    const test = await getTestById(period.testId);
+    const attempt = await getOrCreateActiveAttempt(
+      userId,
+      period.id,
+      period.testId
+    );
 
     const questions = await Question.findAll({
       where: { testId: test.id },
@@ -28,6 +41,13 @@ export async function getCurrentTest(req: Request, res: Response) {
         key: test.key,
         version: test.version,
         name: test.name,
+      },
+      period: {
+        id: period.id,
+        name: period.name,
+        status: period.status,
+        startAt: period.startAt,
+        endAt: period.endAt,
       },
       attempt: {
         id: attempt.id,

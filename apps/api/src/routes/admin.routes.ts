@@ -19,83 +19,37 @@ import {
 import {
   adminGetStudentDetail,
   adminGetStudents,
-  adminListStudents,
 } from "../controllers/admin.students.controller.ts";
 import { adminGetDashboard } from "../controllers/admin.dashboard.controller.ts";
 import { adminListTests } from "../controllers/admin.tests.controller.ts";
 
 const router = Router();
 
-router.get("/dashboard", requireAuth, requireRole("admin"), adminGetDashboard);
+router.use(requireAuth, requireRole("admin"));
 
-router.get("/periods", requireAuth, requireRole("admin"), adminListPeriods);
-router.post("/periods", requireAuth, requireRole("admin"), adminCreatePeriod);
-router.patch(
-  "/periods/:periodId",
-  requireAuth,
-  requireRole("admin"),
-  adminUpdatePeriod
-);
+router.get("/dashboard", adminGetDashboard);
 
-router.get("/tests", requireAuth, requireRole("admin"), adminListTests);
+router.get("/periods", adminListPeriods);
+router.post("/periods", adminCreatePeriod);
+router.patch("/periods/:periodId", adminUpdatePeriod);
 
-router.get(
-  "/periods/:periodId/enrollments",
-  requireAuth,
-  requireRole("admin"),
-  adminListEnrollments
-);
-router.get(
-  "/periods/:periodId/export.csv",
-  requireAuth,
-  requireRole("admin"),
-  adminExportPeriodCSV
-);
+router.get("/tests", adminListTests);
+
+router.get("/periods/:periodId/enrollments", adminListEnrollments);
+router.get("/periods/:periodId/export/csv", adminExportPeriodCSV);
 router.post(
   "/periods/:periodId/import-xlsx",
-  requireAuth,
-  requireRole("admin"),
   uploadXlsx.single("file"),
   adminImportEnrollmentsXlsx
 );
-router.get(
-  "/periods/:periodId/report",
-  requireAuth,
-  requireRole("admin"),
-  adminGetPeriodReport
-);
-router.get(
-  "/periods/:periodId/report.pdf",
-  requireAuth,
-  requireRole("admin"),
-  adminGetPeriodReportPdf
-);
-router.get(
-  "/periods/:periodId/summary",
-  requireAuth,
-  requireRole("admin"),
-  getPeriodSummary
-);
-router.get(
-  "/periods/:periodId/students",
-  requireAuth,
-  requireRole("admin"),
-  getPeriodStudents
-);
+router.get("/periods/:periodId/report", adminGetPeriodReport);
+router.get("/periods/:periodId/report/pdf", adminGetPeriodReportPdf);
+router.get("/periods/:periodId/summary", getPeriodSummary);
+router.get("/periods/:periodId/students", getPeriodStudents);
 
-router.get(
-  "/attempts/:attemptId/result",
-  requireAuth,
-  requireRole("admin"),
-  adminGetAttemptResult
-);
+router.get("/attempts/:attemptId/result", adminGetAttemptResult);
 
-router.get("/students", requireAuth, requireRole("admin"), adminGetStudents);
-router.get(
-  "/students/:studentId",
-  requireAuth,
-  requireRole("admin"),
-  adminGetStudentDetail
-);
+router.get("/students", adminGetStudents);
+router.get("/students/:studentId", adminGetStudentDetail);
 
 export default router;

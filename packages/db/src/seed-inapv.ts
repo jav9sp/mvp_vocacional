@@ -1,8 +1,8 @@
 import "dotenv/config";
 import { Sequelize } from "sequelize-typescript";
 
-import Test from "../../../apps/api/src/models/Test.model.js";
-import Question from "../../../apps/api/src/models/Question.model.js";
+import Test from "../../../apps/api/src/models/Test.model.ts";
+import Question from "../../../apps/api/src/models/Question.model.ts";
 
 // Importa tu data compartida
 import { INAPV_QUESTIONS } from "../../../packages/shared/src/inapv/inapv.data.js";

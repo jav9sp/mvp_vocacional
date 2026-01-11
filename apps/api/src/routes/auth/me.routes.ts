@@ -1,7 +1,6 @@
-// apps/api/src/auth/me.routes.ts
 import { Router } from "express";
-import { requireAuth } from "../middlewares/auth.middleware.js";
-import User from "../models/User.model.js";
+import { requireAuth } from "../../middlewares/auth.middleware.ts";
+import User from "../../models/User.model.ts";
 
 const router = Router();
 

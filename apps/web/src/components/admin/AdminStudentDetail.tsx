@@ -1,47 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
-import { z } from "zod";
 import { requireAuth } from "../../lib/guards";
 import { apiZ } from "../../lib/apiZ";
+import {
+  StudentDetailRespSchema,
+  type StudentDetailResp,
+} from "../../lib/adminStudent";
+import { formatDate, progressPct } from "../../utils/utils";
 
-const AttemptSchema = z
-  .object({
-    id: z.number(),
-    status: z.enum(["in_progress", "finished"]),
-    answeredCount: z.number(),
-    createdAt: z.string().nullable().optional(),
-    finishedAt: z.string().nullable().optional(),
-    periodId: z.number().optional(),
-  })
-  .nullable();
-
-const EnrollmentSchema = z.object({
-  id: z.number(),
-  period: z.object({
-    id: z.number(),
-    name: z.string(),
-    status: z.string(), // "draft" | "active" | "closed" (string para MVP)
-    startAt: z.string().nullable().optional(),
-    endAt: z.string().nullable().optional(),
-  }),
-  status: z.string(), // EnrollmentStatus: invited|active|completed|removed (string MVP)
-  course: z.string().nullable().optional(),
-  derivedStatus: z.enum(["not_started", "in_progress", "finished"]),
-  attempt: AttemptSchema,
-});
-
-const StudentDetailRespSchema = z.object({
-  ok: z.literal(true),
-  student: z.object({
-    id: z.number(),
-    rut: z.string().nullable().optional(),
-    name: z.string(),
-    email: z.string().nullable().optional(),
-  }),
-  enrollments: z.array(EnrollmentSchema),
-});
-
-type StudentDetailResp = z.infer<typeof StudentDetailRespSchema>;
-type EnrollmentRow = StudentDetailResp["enrollments"][number];
+type AdminStudentDetailProps = {
+  studentId: string;
+};
 
 const TOTAL_QUESTIONS = 103;
 
@@ -69,23 +37,9 @@ function badgePeriodStatus(status: string) {
   return `${base} bg-slate-100 text-slate-700`;
 }
 
-function formatDateTime(d?: string | null) {
-  if (!d) return "—";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "—";
-  return dt.toLocaleString();
-}
-
-function progressPct(answeredCount?: number | null) {
-  const v = Math.min(Math.max(Number(answeredCount ?? 0), 0), TOTAL_QUESTIONS);
-  return Math.round((v / TOTAL_QUESTIONS) * 100);
-}
-
 export default function AdminStudentDetail({
   studentId,
-}: {
-  studentId: string;
-}) {
+}: AdminStudentDetailProps) {
   const sid = Number(studentId);
 
   const [loading, setLoading] = useState(true);
@@ -215,11 +169,13 @@ export default function AdminStudentDetail({
                 </tr>
               ) : (
                 enrollmentsSorted.map((r) => (
-                  <tr key={r.id} className="border-t border-border align-top">
+                  <tr
+                    key={r.enrollmentId}
+                    className="border-t border-border align-top">
                     <td className="py-3">
                       <div className="font-semibold">{r.period.name}</div>
                       <div className="mt-0.5 text-xs text-muted">
-                        Enrollment #{r.id} · estado: {r.status}
+                        Enrollment #{r.enrollmentId} · estado: {r.derivedStatus}
                       </div>
                     </td>
 
@@ -266,7 +222,7 @@ export default function AdminStudentDetail({
 
                     <td className="py-3 text-muted">
                       {r.attempt?.status === "finished"
-                        ? formatDateTime(r.attempt.finishedAt)
+                        ? formatDate(r.attempt.finishedAt)
                         : "—"}
                     </td>
 

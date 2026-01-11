@@ -1,23 +1,11 @@
 import { Router } from "express";
-import { requireAuth, requireRole } from "../middlewares/auth.middleware.js";
-import { getAttemptResult } from "../controllers/results.controller.js";
-import { getMyLatestResult } from "../controllers/results.me.controller.js";
+import { requireAuth, requireRole } from "../middlewares/auth.middleware.ts";
+import { getMyLatestResult } from "../controllers/results.me.controller.ts";
 
 const router = Router();
 
-// student ve su propio resultado por attemptId
-router.get(
-  "/attempts/:attemptId/result",
-  requireAuth,
-  requireRole("student"),
-  getAttemptResult
-);
+router.use(requireAuth, requireRole("student"));
 
-router.get(
-  "/me/result",
-  requireAuth,
-  requireRole("student"),
-  getMyLatestResult
-);
+router.get("/me/latest", getMyLatestResult);
 
 export default router;
