@@ -2,12 +2,13 @@ import express from "express";
 import cors from "cors";
 import "dotenv/config";
 import { sequelize, connectDB } from "./config/sequelize.ts";
+import swaggerUi from "swagger-ui-express";
+import { swaggerSpec } from "./config/swagger.ts";
 
 import authRoutes from "./routes/auth/auth.routes.ts";
-import testRoutes from "./routes/test.routes.ts";
 import enrollmentsRoutes from "./routes/student/enrollments.router.ts";
 import attemptsRoutes from "./routes/student/attempts.routes.ts";
-import resultsRoutes from "./routes/results.routes.ts";
+import resultsRoutes from "./routes/student/results.routes.ts";
 import adminRoutes from "./routes/admin.routes.ts";
 
 const app = express();
@@ -19,6 +20,9 @@ app.use(
   })
 );
 app.use(express.json());
+
+app.get("/docs.json", (_req, res) => res.json(swaggerSpec));
+app.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 // Logger ANTES de rutas
 app.use((req, _res, next) => {
@@ -41,10 +45,6 @@ app.get("/health/db", async (_req, res) => {
 // Rutas
 app.use("/auth", authRoutes);
 app.use("/enrollments", enrollmentsRoutes);
-
-// Deprecated
-// app.use("/test", testRoutes);
-
 app.use("/attempts", attemptsRoutes);
 app.use("/results", resultsRoutes);
 app.use("/admin", adminRoutes);

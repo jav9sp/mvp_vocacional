@@ -3,6 +3,10 @@ import bcrypt from "bcrypt";
 import { Sequelize } from "sequelize-typescript";
 
 import User from "../../../apps/api/src/models/User.model.ts";
+import Organization from "../../../apps/api/src/models/Organization.model.ts";
+import Enrollment from "../../../apps/api/src/models/Enrollment.model.ts";
+import Period from "../../../apps/api/src/models/Period.model.ts";
+import Test from "../../../apps/api/src/models/Test.model.ts";
 
 const sequelize = new Sequelize({
   dialect: "mysql",
@@ -11,7 +15,7 @@ const sequelize = new Sequelize({
   database: process.env.MYSQL_DATABASE,
   username: process.env.MYSQL_USER,
   password: process.env.MYSQL_PASSWORD,
-  models: [User],
+  models: [User, Organization, Enrollment, Period, Test],
   logging: false,
 });
 
@@ -32,6 +36,7 @@ async function main() {
     const [student, created] = await User.findOrCreate({
       where: { email },
       defaults: {
+        organizationId: 1,
         rut: `${baseRut + i}-0`,
         role: "student",
         name: `Estudiante ${i}`,

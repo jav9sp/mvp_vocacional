@@ -164,7 +164,7 @@ export default function AdminStudentDetail({
               {enrollmentsSorted.length === 0 ? (
                 <tr className="border-t border-border">
                   <td className="py-3 text-muted" colSpan={7}>
-                    Este estudiante no tiene enrollments.
+                    Este estudiante no está inscrito en ningún periodo.
                   </td>
                 </tr>
               ) : (

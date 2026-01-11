@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import bcrypt from "bcrypt";
 import { z } from "zod";
-import User from "../../models/User.model.ts";
-import { signAccessToken } from "../../utils/jwt.ts";
+import User from "../models/User.model.ts";
+import { signAccessToken } from "../utils/jwt.ts";
 
 const LoginBodySchema = z.object({
   email: z.email(),
