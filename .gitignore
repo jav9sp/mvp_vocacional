@@ -26,3 +26,5 @@ pnpm-debug.log*
 # general
 .vscode
 .gitignore
+# Local Netlify folder
+.netlify
