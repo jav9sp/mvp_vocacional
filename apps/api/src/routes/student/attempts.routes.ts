@@ -1,12 +1,12 @@
 import { Router } from "express";
-import { requireAuth, requireRole } from "../../middlewares/auth.middleware.ts";
+import { requireAuth, requireRole } from "../../middlewares/auth.middleware.js";
 import {
   getAttemptContext,
   getAttemptAnswers,
   saveAttemptAnswers,
   finishAttempt,
-} from "../../controllers/attempts.controller.ts";
-import { getAttemptResult } from "../../controllers/results.controller.ts";
+} from "../../controllers/attempts.controller.js";
+import { getAttemptResult } from "../../controllers/results.controller.js";
 
 const router = Router();
 

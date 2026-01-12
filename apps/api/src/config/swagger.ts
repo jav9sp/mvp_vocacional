@@ -124,5 +124,5 @@ export const swaggerSpec = swaggerJSDoc({
     },
   },
   // Ajusta estos globs a tu estructura real:
-  apis: ["src/routes/auth/*.ts", "src/routes/student/*.ts", "src/routes/*.ts"],
+  apis: ["src/routes/auth/*.js", "src/routes/student/*.js", "src/routes/*.js"],
 });

@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import { buildPeriodReport } from "../services/period-report.service.ts";
+import { buildPeriodReport } from "../services/period-report.service.js";
 
 const ParamsSchema = z.object({
   periodId: z.coerce.number().int().positive(),

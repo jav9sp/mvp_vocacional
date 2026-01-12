@@ -1,6 +1,6 @@
 import { Router } from "express";
-import { requireAuth, requireRole } from "../../middlewares/auth.middleware.ts";
-import { getMyLatestResult } from "../../controllers/results.me.controller.ts";
+import { requireAuth, requireRole } from "../../middlewares/auth.middleware.js";
+import { getMyLatestResult } from "../../controllers/results.me.controller.js";
 
 const router = Router();
 

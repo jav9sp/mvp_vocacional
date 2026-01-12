@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
 import { Op, fn, col, literal } from "sequelize";
-import Period from "../models/Period.model.ts";
-import Enrollment from "../models/Enrollment.model.ts";
-import Attempt from "../models/Attempt.model.ts";
+import Period from "../models/Period.model.js";
+import Enrollment from "../models/Enrollment.model.js";
+import Attempt from "../models/Attempt.model.js";
 
 export async function adminGetDashboard(req: Request, res: Response) {
   const orgId = req.auth?.organizationId;

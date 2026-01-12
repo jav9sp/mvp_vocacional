@@ -2,16 +2,16 @@ import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import { sequelize } from "../config/sequelize.js";
 
-import Attempt from "../models/Attempt.model.ts";
-import Answer from "../models/Answer.model.ts";
-import Question from "../models/Question.model.ts";
-import Result from "../models/Result.model.ts";
+import Attempt from "../models/Attempt.model.js";
+import Answer from "../models/Answer.model.js";
+import Question from "../models/Question.model.js";
+import Result from "../models/Result.model.js";
 
-import { INAPV_AREAS } from "../data/inapv-areas.ts";
-import { computeInapvScores } from "../services/scoring.service.ts";
-import { SaveAnswersBodySchema } from "../validators/attempts.schemas.ts";
-import Test from "../models/Test.model.ts";
-import Period from "../models/Period.model.ts";
+import { INAPV_AREAS } from "../data/inapv-areas.js";
+import { computeInapvScores } from "../services/scoring.service.js";
+import { SaveAnswersBodySchema } from "../validators/attempts.schemas.js";
+import Test from "../models/Test.model.js";
+import Period from "../models/Period.model.js";
 
 const ParamsSchema = z.object({
   attemptId: z.coerce.number().int().positive(),

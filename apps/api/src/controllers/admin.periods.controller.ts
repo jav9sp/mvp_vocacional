@@ -1,17 +1,17 @@
 import { Request, Response } from "express";
 
 import { Op, fn, col, literal } from "sequelize";
-import Period from "../models/Period.model.ts";
-import Test from "../models/Test.model.ts";
-import Organization from "../models/Organization.model.ts";
-import Attempt from "../models/Attempt.model.ts";
-import Enrollment from "../models/Enrollment.model.ts";
+import Period from "../models/Period.model.js";
+import Test from "../models/Test.model.js";
+import Organization from "../models/Organization.model.js";
+import Attempt from "../models/Attempt.model.js";
+import Enrollment from "../models/Enrollment.model.js";
 
 import {
   CreatePeriodSchema,
   PeriodIdParamsSchema,
   UpdatePeriodSchema,
-} from "../types/schemas.ts";
+} from "../types/schemas.js";
 
 export async function adminListPeriods(req: Request, res: Response) {
   const orgId = req.auth?.organizationId;

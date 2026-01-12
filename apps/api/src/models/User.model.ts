@@ -13,8 +13,8 @@ import {
   HasMany,
   BelongsTo,
 } from "sequelize-typescript";
-import Enrollment from "./Enrollment.model.ts";
-import Organization from "./Organization.model.ts";
+import Enrollment from "./Enrollment.model.js";
+import Organization from "./Organization.model.js";
 
 export type UserRole = "admin" | "student";
 

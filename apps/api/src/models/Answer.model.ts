@@ -9,8 +9,8 @@ import {
   ForeignKey,
   Index,
 } from "sequelize-typescript";
-import Attempt from "./Attempt.model.ts";
-import Question from "./Question.model.ts";
+import Attempt from "./Attempt.model.js";
+import Question from "./Question.model.js";
 
 @Table({
   tableName: "answers",

@@ -9,6 +9,8 @@
     "dev": "concurrently -n api,web -c auto \"npm run dev:api\" \"npm run dev:web\"",
     "build:api": "npm run build -w @apps/api",
     "build:web": "npm run build -w @apps/web",
+    "start:api": "npm run start -w @apps/api",
+    "start:web": "npm run start -w @apps/web",
     "db:seed": "npm run seed -w @packages/db",
     "test": "echo \"Error: no test specified\" && exit 1"
   },

@@ -9,7 +9,7 @@ import {
   ForeignKey,
   Index,
 } from "sequelize-typescript";
-import Test from "./Test.model.ts";
+import Test from "./Test.model.js";
 
 @Table({
   tableName: "questions",

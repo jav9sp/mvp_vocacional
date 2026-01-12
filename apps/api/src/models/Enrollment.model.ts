@@ -10,8 +10,8 @@ import {
   ForeignKey,
   BelongsTo,
 } from "sequelize-typescript";
-import Period from "./Period.model.ts";
-import User from "./User.model.ts";
+import Period from "./Period.model.js";
+import User from "./User.model.js";
 
 export type EnrollmentStatus = "invited" | "active" | "completed" | "removed";
 

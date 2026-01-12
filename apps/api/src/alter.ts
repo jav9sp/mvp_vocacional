@@ -1,5 +1,5 @@
 import "dotenv/config";
-import { sequelize } from "./config/sequelize.ts";
+import { sequelize } from "./config/sequelize.js";
 
 async function main() {
   await sequelize.authenticate();

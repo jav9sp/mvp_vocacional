@@ -11,8 +11,8 @@ import {
   Index,
   BelongsTo,
 } from "sequelize-typescript";
-import Organization from "./Organization.model.ts";
-import Test from "./Test.model.ts";
+import Organization from "./Organization.model.js";
+import Test from "./Test.model.js";
 
 export type PeriodStatus = "draft" | "active" | "closed";
 

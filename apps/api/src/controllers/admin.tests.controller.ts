@@ -1,5 +1,5 @@
 import { Request, Response } from "express";
-import Test from "../models/Test.model.ts";
+import Test from "../models/Test.model.js";
 
 export async function adminListTests(req: Request, res: Response) {
   const tests = await Test.findAll({

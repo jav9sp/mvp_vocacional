@@ -6,22 +6,22 @@ import {
   adminUpdatePeriod,
 } from "../controllers/admin.periods.controller.js";
 import { adminListEnrollments } from "../controllers/admin.enrollments.controller.js";
-import { adminGetAttemptResult } from "../controllers/admin.results.controller.ts";
-import { adminExportPeriodCSV } from "../controllers/admin.export.controller.ts";
-import { uploadXlsx } from "../middlewares/upload.middleware.ts";
-import { adminImportEnrollmentsXlsx } from "../controllers/admin.import.controller.ts";
-import { adminGetPeriodReport } from "../controllers/admin.report.controller.ts";
-import { adminGetPeriodReportPdf } from "../controllers/admin.report.pdf.controller.ts";
+import { adminGetAttemptResult } from "../controllers/admin.results.controller.js";
+import { adminExportPeriodCSV } from "../controllers/admin.export.controller.js";
+import { uploadXlsx } from "../middlewares/upload.middleware.js";
+import { adminImportEnrollmentsXlsx } from "../controllers/admin.import.controller.js";
+import { adminGetPeriodReport } from "../controllers/admin.report.controller.js";
+import { adminGetPeriodReportPdf } from "../controllers/admin.report.pdf.controller.js";
 import {
   getPeriodStudents,
   getPeriodSummary,
-} from "../controllers/admin.periods.detail.controller.ts";
+} from "../controllers/admin.periods.detail.controller.js";
 import {
   adminGetStudentDetail,
   adminGetStudents,
-} from "../controllers/admin.students.controller.ts";
-import { adminGetDashboard } from "../controllers/admin.dashboard.controller.ts";
-import { adminListTests } from "../controllers/admin.tests.controller.ts";
+} from "../controllers/admin.students.controller.js";
+import { adminGetDashboard } from "../controllers/admin.dashboard.controller.js";
+import { adminListTests } from "../controllers/admin.tests.controller.js";
 
 const router = Router();
 

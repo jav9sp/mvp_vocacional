@@ -1,8 +1,8 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
-import Attempt from "../models/Attempt.model.ts";
-import Result from "../models/Result.model.ts";
-import Period from "../models/Period.model.ts";
+import Attempt from "../models/Attempt.model.js";
+import Result from "../models/Result.model.js";
+import Period from "../models/Period.model.js";
 
 const ParamsSchema = z.object({
   attemptId: z.coerce.number().int().positive(),

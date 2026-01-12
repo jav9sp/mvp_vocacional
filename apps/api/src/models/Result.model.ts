@@ -10,7 +10,7 @@ import {
   Unique,
   Index,
 } from "sequelize-typescript";
-import Attempt from "./Attempt.model.ts";
+import Attempt from "./Attempt.model.js";
 
 @Table({
   tableName: "results",

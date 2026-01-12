@@ -1,11 +1,11 @@
 import { NextFunction, Request, Response } from "express";
 import { z } from "zod";
 import { Op } from "sequelize";
-import Enrollment from "../models/Enrollment.model.ts";
-import Period from "../models/Period.model.ts";
-import Test from "../models/Test.model.ts";
-import Attempt from "../models/Attempt.model.ts";
-import { getOrCreateActiveAttempt } from "../services/attempt.service.ts";
+import Enrollment from "../models/Enrollment.model.js";
+import Period from "../models/Period.model.js";
+import Test from "../models/Test.model.js";
+import Attempt from "../models/Attempt.model.js";
+import { getOrCreateActiveAttempt } from "../services/attempt.service.js";
 
 const EnrollmentIdParamsSchema = z.object({
   enrollmentId: z.coerce.number().int().positive(),

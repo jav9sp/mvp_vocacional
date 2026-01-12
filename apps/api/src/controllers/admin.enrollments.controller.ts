@@ -1,10 +1,10 @@
 import { Request, Response } from "express";
 import { z } from "zod";
-import Enrollment from "../models/Enrollment.model.ts";
-import Period from "../models/Period.model.ts";
-import User from "../models/User.model.ts";
-import Attempt from "../models/Attempt.model.ts";
-import Result from "../models/Result.model.ts";
+import Enrollment from "../models/Enrollment.model.js";
+import Period from "../models/Period.model.js";
+import User from "../models/User.model.js";
+import Attempt from "../models/Attempt.model.js";
+import Result from "../models/Result.model.js";
 
 const ParamsSchema = z.object({
   periodId: z.coerce.number().int().positive(),

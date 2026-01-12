@@ -1,5 +1,5 @@
-import Attempt from "../models/Attempt.model.ts";
-import Result from "../models/Result.model.ts";
+import Attempt from "../models/Attempt.model.js";
+import Result from "../models/Result.model.js";
 
 const RESULT_ATTRS = [
   "scoresByArea",

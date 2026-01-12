@@ -1,14 +1,14 @@
 import { Sequelize } from "sequelize-typescript";
 import dotenv from "dotenv";
-import User from "../models/User.model.ts";
-import Test from "../models/Test.model.ts";
-import Question from "../models/Question.model.ts";
-import Attempt from "../models/Attempt.model.ts";
-import Answer from "../models/Answer.model.ts";
-import Result from "../models/Result.model.ts";
-import Organization from "../models/Organization.model.ts";
-import Period from "../models/Period.model.ts";
-import Enrollment from "../models/Enrollment.model.ts";
+import User from "../models/User.model.js";
+import Test from "../models/Test.model.js";
+import Question from "../models/Question.model.js";
+import Attempt from "../models/Attempt.model.js";
+import Answer from "../models/Answer.model.js";
+import Result from "../models/Result.model.js";
+import Organization from "../models/Organization.model.js";
+import Period from "../models/Period.model.js";
+import Enrollment from "../models/Enrollment.model.js";
 
 dotenv.config();
 

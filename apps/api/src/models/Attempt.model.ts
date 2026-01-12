@@ -11,9 +11,9 @@ import {
   Index,
   BelongsTo,
 } from "sequelize-typescript";
-import User from "./User.model.ts";
-import Test from "./Test.model.ts";
-import Period from "./Period.model.ts";
+import User from "./User.model.js";
+import Test from "./Test.model.js";
+import Period from "./Period.model.js";
 
 export type AttemptStatus = "in_progress" | "finished";
 
