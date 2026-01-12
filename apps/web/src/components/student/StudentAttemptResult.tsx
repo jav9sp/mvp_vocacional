@@ -36,7 +36,7 @@ function medal(i: number) {
   return "•";
 }
 
-export default function AdminAttemptResult({
+export default function StudentAttemptResult({
   attemptId,
 }: {
   attemptId: string;
@@ -48,7 +48,7 @@ export default function AdminAttemptResult({
   const [data, setData] = useState<ResultResp | null>(null);
 
   useEffect(() => {
-    const ok = requireAuth("admin");
+    const ok = requireAuth("student");
     if (!ok) return;
 
     if (!Number.isFinite(id)) {
@@ -59,7 +59,7 @@ export default function AdminAttemptResult({
 
     (async () => {
       try {
-        const resp = await api<ResultResp>(`/admin/attempts/${id}/result`);
+        const resp = await api<ResultResp>(`/attempts/${id}/result`);
         setData(resp);
       } catch (e: any) {
         setErr(e.message);

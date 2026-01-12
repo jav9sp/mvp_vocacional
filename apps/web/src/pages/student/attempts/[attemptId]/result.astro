@@ -1,0 +1,10 @@
+---
+import StudentLayout from "../../../../layouts/StudentLayout.astro";
+import StudentAttemptResult from "../../../../components/student/StudentAttemptResult";
+
+const { attemptId } = Astro.params;
+---
+
+<StudentLayout title="Resultados">
+  <StudentAttemptResult attemptId={attemptId!} client:load />
+</StudentLayout>

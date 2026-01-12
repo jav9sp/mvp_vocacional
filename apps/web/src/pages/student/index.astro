@@ -1,11 +1,9 @@
 ---
 import "../../styles/global.css";
-import AppLayout from "../../layouts/AppLayout.astro";
-import StudentNavbar from "../../components/common/StudentNavbar";
-import StudentHome from "../../components/student/StudentHome";
+import StudentLayout from "../../layouts/StudentLayout.astro";
+import StudentDashboard from "../../components/student/StudentDashboard.tsx";
 ---
 
-<AppLayout role="Estudiante">
-  <StudentNavbar client:load />
-  <StudentHome client:load />
-</AppLayout>
+<StudentLayout title="Inicio">
+  <StudentDashboard client:load />
+</StudentLayout>

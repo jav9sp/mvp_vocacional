@@ -19,7 +19,7 @@ export default function StudentNavbar() {
     const user = getUser();
     if (user?.name) setUserName(user.name);
 
-    api<{ status: string }>("/me/result")
+    api<{ status: string }>("/me")
       .then((res) => {
         setTestStatus(res.status === "finished" ? "finished" : "not_finished");
       })

@@ -1,15 +1,13 @@
 ---
 import "../styles/global.css";
-import AdminTopbar from "../components/admin/AdminTopbar";
+import StudentTopbar from "../components/student/StudentTopbar.tsx";
 import { getActiveHref } from "../utils/utils";
 
 const path = Astro.url.pathname;
 
 const nav = [
-  { href: "/admin", label: "Dashboard" },
-  { href: "/admin/periods", label: "Periodos" },
-  { href: "/admin/students", label: "Estudiantes" },
-  // { href: "/admin/settings", label: "Configuración" },
+  { href: "/student", label: "Inicio" },
+  { href: "/student/tests", label: "Mis tests" },
 ];
 
 const activeHref = getActiveHref(path, nav);
@@ -26,7 +24,7 @@ const { title } = Astro.props;
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <title>{`Admin - ${title}`}</title>
+    <title>{`Estudiante - ${title}`}</title>
   </head>
 
   <body class="min-h-screen bg-surface text-fg">
@@ -38,7 +36,7 @@ const { title } = Astro.props;
           <a href="/admin" class="text-lg font-extrabold tracking-tight"
             >Portal Vocacional</a
           >
-          <div class="mt-1 text-xs text-muted">Panel de administración</div>
+          <div class="mt-1 text-xs text-muted">Panel de Estudiante</div>
         </div>
 
         <nav class="px-2 pb-4">
@@ -72,7 +70,7 @@ const { title } = Astro.props;
 
       <!-- Main -->
       <div class="flex min-w-0 flex-1 flex-col">
-        <AdminTopbar client:load />
+        <StudentTopbar client:load />
 
         <main class="mx-auto w-full max-w-6xl px-4 py-6">
           <slot />

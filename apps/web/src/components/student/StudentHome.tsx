@@ -1,7 +1,6 @@
-import React, { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { requireAuth } from "../../lib/guards";
 import { api } from "../../lib/api";
-import LogoutButton from "../common/LogoutButton";
 
 type CurrentTestResp = {
   ok: boolean;

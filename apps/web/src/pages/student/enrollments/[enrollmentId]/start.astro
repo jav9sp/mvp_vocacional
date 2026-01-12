@@ -1,0 +1,10 @@
+---
+import StudentLayout from "../../../../layouts/StudentLayout.astro";
+import StartEnrollment from "../../../../components/student/StartEnrollment.tsx";
+
+const { enrollmentId } = Astro.params;
+---
+
+<StudentLayout title="Iniciando…">
+  <StartEnrollment enrollmentId={enrollmentId!} client:load />
+</StudentLayout>

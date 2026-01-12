@@ -1,0 +1,18 @@
+---
+import StudentLayout from "../../../layouts/StudentLayout.astro";
+
+const { enrollmentId } = Astro.params;
+---
+
+<StudentLayout title={enrollmentId!}>
+  <h1>Acá va la pantalla de enrollment</h1>
+  <p>
+    Sería bueno poner la info del enrollment y una descripción del test antes de
+    comenzar, con botón "Comenzar" para pasar al intento.
+  </p>
+
+  <a
+    href={`/student/enrollments/${enrollmentId}/start`}
+    class="btn btn-secondary justify-center">Comenzar</a
+  >
+</StudentLayout>

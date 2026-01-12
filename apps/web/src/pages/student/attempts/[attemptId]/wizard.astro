@@ -1,0 +1,10 @@
+---
+import StudentLayout from "../../../../layouts/StudentLayout.astro";
+import TestWizard from "../../../../components/student/TestWizard.tsx";
+
+const { attemptId } = Astro.params;
+---
+
+<StudentLayout title="Test">
+  <TestWizard attemptId={attemptId!} client:load />
+</StudentLayout>

@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { requireAuth } from "../../lib/guards";
 import { api } from "../../lib/api";
+import { formatDate } from "../../utils/utils";
 
 type DashboardResp = {
   ok: boolean;
@@ -22,13 +23,6 @@ type DashboardResp = {
     completionPct: number;
   }>;
 };
-
-function formatDate(d?: string | null) {
-  if (!d) return "—";
-  const dt = new Date(d);
-  if (Number.isNaN(dt.getTime())) return "—";
-  return dt.toLocaleDateString();
-}
 
 function statusLabel(status: string) {
   const s = (status || "").toLowerCase();

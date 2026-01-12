@@ -15,7 +15,7 @@ type ResultResp = {
   };
 };
 
-export default function ResultView() {
+export default function ResultView({ attemptId }: { attemptId: string }) {
   const [data, setData] = useState<ResultResp | null>(null);
   const [err, setErr] = useState<string | null>(null);
 
@@ -23,7 +23,7 @@ export default function ResultView() {
     const auth = requireAuth("student");
     if (!auth) return;
 
-    api<ResultResp>("/me/result")
+    api<ResultResp>(`/attempts/${attemptId}/result`)
       .then((d) => {
         setData(d);
         if (d.status !== "finished") window.location.href = "/student";
