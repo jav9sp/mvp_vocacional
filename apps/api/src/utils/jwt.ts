@@ -1,11 +1,12 @@
-// apps/api/src/utils/jwt.ts
+import { z } from "zod";
 import jwt from "jsonwebtoken";
 
-export type JwtUserPayload = {
-  sub: number; // userId
-  role: "admin" | "student";
-  organizationId: number;
-};
+const JwtUserPayloadSchema = z.object({
+  sub: z.number(),
+  role: z.union([z.literal("admin"), z.literal("student")]),
+  organizationId: z.number(),
+});
+export type JwtUserPayload = z.infer<typeof JwtUserPayloadSchema>;
 
 function required(name: string, value: string | undefined): string {
   if (!value) throw new Error(`Missing env var: ${name}`);
@@ -21,5 +22,6 @@ export function signAccessToken(payload: JwtUserPayload) {
 }
 
 export function verifyAccessToken(token: string): JwtUserPayload {
-  return jwt.verify(token, JWT_SECRET) as JwtUserPayload;
+  const decoded = jwt.verify(token, JWT_SECRET);
+  return JwtUserPayloadSchema.parse(decoded);
 }

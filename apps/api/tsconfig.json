@@ -1,12 +1,27 @@
 {
   "extends": "../../tsconfig.base.json",
   "compilerOptions": {
-    "outDir": "dist",
+    "lib": ["ESNext"],
+    "target": "ES2022",
+    "moduleResolution": "NodeNext",
+    "module": "NodeNext",
+
     "rootDir": "./src",
-    "noEmit": true,
-    "allowImportingTsExtensions": true,
+    "outDir": "./dist",
+
+    "noEmit": false,
+    "declaration": true,
+    "sourceMap": true,
+
+    "esModuleInterop": true,
     "strict": false,
-    "sourceMap": true
+    "skipLibCheck": true,
+
+    "experimentalDecorators": true,
+    "emitDecoratorMetadata": true,
+    "allowImportingTsExtensions": true,
+    "emitDeclarationOnly": true
   },
-  "include": ["src/**/*.ts"]
+  "include": ["src/**/*.ts"],
+  "exclude": ["node_modules", "dist"]
 }
